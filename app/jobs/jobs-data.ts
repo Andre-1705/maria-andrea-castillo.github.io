@@ -51,12 +51,12 @@ export const INITIAL_JOBS: Record<JobCategory, Job[]> = {
   ],
   "Comunicación Digital": [
     {
-      id: "1",
+      id: "25",
       title: "Proyecto Sustentable",
       description:
         "Diseño de lineamientos institucionales. Articulación con el proyecto de juguetes de Tuca Toco.",
       image: "/proyecto_Tuca_Toco.png",
-      link: "/jobs/1",
+      link: "/jobs/25",
     },
     {
       id: "3",
