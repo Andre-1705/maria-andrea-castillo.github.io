@@ -1,5 +1,7 @@
 "use client"
 
+export const dynamic = "force-dynamic"
+
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -122,17 +124,25 @@ export default function AdminDashboardPage() {
   const [jobs, setJobs] = useState(INITIAL_JOBS)
   const [isAddingJob, setIsAddingJob] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState(Object.keys(INITIAL_JOBS)[0])
+  const [visitorsCount, setVisitorsCount] = useState("0")
+  const [contactsCount, setContactsCount] = useState("0")
 
   // Verificar autenticación
   useEffect(() => {
-    const isAuthenticated = localStorage.getItem("isAuthenticated")
-    if (!isAuthenticated) {
-      router.push("/admin")
+    if (typeof window !== 'undefined') {
+      const isAuthenticated = localStorage.getItem("isAuthenticated")
+      if (!isAuthenticated) {
+        router.push("/admin")
+      }
+      setVisitorsCount(localStorage.getItem("visitorsCount") || "0")
+      setContactsCount(localStorage.getItem("contactsCount") || "0")
     }
   }, [router])
 
   const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated")
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem("isAuthenticated")
+    }
     router.push("/admin")
   }
 
@@ -247,11 +257,11 @@ export default function AdminDashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-4 bg-black/30 rounded-lg">
                 <h3 className="text-lg font-medium mb-2">Visitantes Totales</h3>
-                <p className="text-3xl font-bold">{localStorage.getItem("visitorsCount") || "0"}</p>
+                <p className="text-3xl font-bold">{visitorsCount}</p>
               </div>
               <div className="p-4 bg-black/30 rounded-lg">
                 <h3 className="text-lg font-medium mb-2">Contactos Recibidos</h3>
-                <p className="text-3xl font-bold">{localStorage.getItem("contactsCount") || "0"}</p>
+                <p className="text-3xl font-bold">{contactsCount}</p>
               </div>
             </div>
           </CardContent>

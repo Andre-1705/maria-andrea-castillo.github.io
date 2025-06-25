@@ -86,8 +86,8 @@ export function JobCarousel({ title, jobs, isAdmin = false, onDelete }: JobCarou
                         display: 'block',
                         margin: 'auto',
                         height: '100%',
-                        width: job.id === "19" || job.id === "20" ? '100%' : 'auto',
-                        objectFit: job.id === "19" || job.id === "20" ? 'cover' : 'contain'
+                        width: job.id === "7" || job.id === "19" || job.id === "20" ? '100%' : 'auto',
+                        objectFit: job.id === "7" || job.id === "19" || job.id === "20" ? 'cover' : 'contain'
                       }}
                     />
                   </div>
