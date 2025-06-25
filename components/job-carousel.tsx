@@ -28,7 +28,6 @@ interface JobCarouselProps {
 export function JobCarousel({ title, jobs, isAdmin = false, onDelete }: JobCarouselProps) {
   const [scrollPosition, setScrollPosition] = useState(0)
   const [mutedStates, setMutedStates] = useState<Record<string, boolean>>({})
-  const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({})
 
   const scroll = (direction: "left" | "right") => {
     const container = document.getElementById(`carousel-${title}`)
@@ -54,13 +53,16 @@ export function JobCarousel({ title, jobs, isAdmin = false, onDelete }: JobCarou
     }
   }
 
-  const toggleMute = (jobId: string) => {
-    const video = videoRefs.current[jobId]
-    if (video) {
-      video.muted = !video.muted
+  const toggleMute = (jobId: string, event: React.MouseEvent) => {
+    event.preventDefault()
+    event.stopPropagation()
+    
+    const videoElement = event.currentTarget.parentElement?.querySelector('video') as HTMLVideoElement
+    if (videoElement) {
+      videoElement.muted = !videoElement.muted
       setMutedStates(prev => ({
         ...prev,
-        [jobId]: video.muted
+        [jobId]: videoElement.muted
       }))
     }
   }
@@ -90,15 +92,6 @@ export function JobCarousel({ title, jobs, isAdmin = false, onDelete }: JobCarou
                 {job.video ? (
                   <div className="flex justify-center items-center h-full w-full">
                     <video
-                      ref={(el) => {
-                        videoRefs.current[job.id] = el
-                        if (el) {
-                          setMutedStates(prev => ({
-                            ...prev,
-                            [job.id]: el.muted
-                          }))
-                        }
-                      }}
                       src={job.video}
                       autoPlay
                       loop
@@ -116,11 +109,7 @@ export function JobCarousel({ title, jobs, isAdmin = false, onDelete }: JobCarou
                       variant="secondary"
                       size="icon"
                       className="absolute bottom-2 right-2 h-8 w-8 bg-black/50 hover:bg-black/70"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        toggleMute(job.id)
-                      }}
+                      onClick={(e) => toggleMute(job.id, e)}
                     >
                       {mutedStates[job.id] ? (
                         <VolumeX className="h-4 w-4" />
