@@ -2,12 +2,12 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, Trash2, Volume2, VolumeX } from "lucide-react"
 
 type Job = {
   id: string
@@ -27,6 +27,8 @@ interface JobCarouselProps {
 
 export function JobCarousel({ title, jobs, isAdmin = false, onDelete }: JobCarouselProps) {
   const [scrollPosition, setScrollPosition] = useState(0)
+  const [mutedStates, setMutedStates] = useState<Record<string, boolean>>({})
+  const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({})
 
   const scroll = (direction: "left" | "right") => {
     const container = document.getElementById(`carousel-${title}`)
@@ -49,6 +51,17 @@ export function JobCarousel({ title, jobs, isAdmin = false, onDelete }: JobCarou
     e.stopPropagation()
     if (onDelete) {
       onDelete(id)
+    }
+  }
+
+  const toggleMute = (jobId: string) => {
+    const video = videoRefs.current[jobId]
+    if (video) {
+      video.muted = !video.muted
+      setMutedStates(prev => ({
+        ...prev,
+        [jobId]: video.muted
+      }))
     }
   }
 
@@ -77,6 +90,15 @@ export function JobCarousel({ title, jobs, isAdmin = false, onDelete }: JobCarou
                 {job.video ? (
                   <div className="flex justify-center items-center h-full w-full">
                     <video
+                      ref={(el) => {
+                        videoRefs.current[job.id] = el
+                        if (el) {
+                          setMutedStates(prev => ({
+                            ...prev,
+                            [job.id]: el.muted
+                          }))
+                        }
+                      }}
                       src={job.video}
                       autoPlay
                       loop
@@ -90,6 +112,22 @@ export function JobCarousel({ title, jobs, isAdmin = false, onDelete }: JobCarou
                         objectFit: job.id === "7" || job.id === "19" || job.id === "20" ? 'cover' : 'contain'
                       }}
                     />
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      className="absolute bottom-2 right-2 h-8 w-8 bg-black/50 hover:bg-black/70"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        toggleMute(job.id)
+                      }}
+                    >
+                      {mutedStates[job.id] ? (
+                        <VolumeX className="h-4 w-4" />
+                      ) : (
+                        <Volume2 className="h-4 w-4" />
+                      )}
+                    </Button>
                   </div>
                 ) : (
                   <Image
