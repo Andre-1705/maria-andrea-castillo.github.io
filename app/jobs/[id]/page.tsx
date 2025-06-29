@@ -1,14 +1,52 @@
+"use client"
+
+import { useState, useEffect } from "react"
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { INITIAL_JOBS } from "../jobs-data";
+import { JobsService } from "@/lib/jobs-service"
+import type { Database } from "@/lib/supabase"
+import { useToast } from "@/components/ui/use-toast"
+
+type Job = Database['public']['Tables']['jobs']['Row']
 
 export default function JobDetailPage({ params }: { params: { id: string } }) {
-  // Buscar el trabajo por id en INITIAL_JOBS
-  let job = null;
-  for (const [, jobs] of Object.entries(INITIAL_JOBS)) {
-    job = jobs.find((j) => String(j.id) === String(params.id));
-    if (job) break;
+  const [job, setJob] = useState<Job | null>(null)
+  const [loading, setLoading] = useState(true)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    async function loadJob() {
+      try {
+        setLoading(true)
+        const jobData = await JobsService.getJobById(params.id)
+        setJob(jobData)
+      } catch (error) {
+        console.error('Error loading job:', error)
+        toast({
+          title: "Error",
+          description: "No se pudo cargar el proyecto. Por favor, intenta de nuevo.",
+          variant: "destructive"
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadJob()
+  }, [params.id, toast])
+
+  if (loading) {
+    return (
+      <div className="container py-12 md:py-16">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Cargando proyecto...</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (!job) {
@@ -33,6 +71,11 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
           </Link>
           <h1 className="text-3xl md:text-4xl font-bold">{job.title}</h1>
           <p className="text-lg text-white/80">{job.description}</p>
+          <div className="mt-4">
+            <span className="inline-block bg-primary/20 text-primary px-3 py-1 rounded-full text-sm font-medium">
+              {job.category}
+            </span>
+          </div>
         </div>
         <div className="relative h-[400px] w-full rounded-lg overflow-hidden">
           {job.image ? (
@@ -48,7 +91,11 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
               controls
               className="object-contain w-full h-full bg-black rounded-lg"
             />
-          ) : null}
+          ) : (
+            <div className="w-full h-full bg-muted flex items-center justify-center">
+              <p className="text-muted-foreground">Sin imagen o video</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

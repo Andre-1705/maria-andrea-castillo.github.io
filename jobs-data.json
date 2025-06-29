@@ -1,0 +1,62 @@
+{
+  "Desarrollo Web": [
+    {
+      "id": "1",
+      "title": "Plataforma multimedia",
+      "description": "Creación de portal multimedia para desarrollo profesional integral.",
+      "image": "/port_pag_mac.png",
+      "link": "/jobs/1"
+    },
+    {
+      "id": "2",
+      "title": "Carrusel multimedia",
+      "description": "Diseño de carrusel multimedia para exposición de fotos, videos, publicaciones integradas, etc.",
+      "image": "/pantalla_carrusel_mac.png",
+      "link": "/jobs/2"
+    },
+    {
+      "id": "23",
+      "title": "Diseño de página web",
+      "description": "Diseño de página web para biblioteca on line y todo tipo de documentación.",
+      "image": "/port_pag_libros.png",
+      "link": "/jobs/23"
+    },
+    {
+      "id": "24",
+      "title": "Desarrollo java",
+      "description": "Desarrollo aplicación para negocio de concesionaria de autos.",
+      "image": "/java_consecionaria.png",
+      "link": "/jobs/24"
+    }
+  ],
+  "Comunicación Digital": [
+    {
+      "id": "25",
+      "title": "Proyecto Sustentable",
+      "description": "Diseño de lineamientos institucionales. Articulación con el proyecto de juguetes de Tuca Toco.",
+      "image": "/proyecto_Tuca_Toco.png",
+      "link": "/jobs/25"
+    },
+    {
+      "id": "3",
+      "title": "Campaña de Lanzamiento",
+      "description": "Estrategia integral para el lanzamiento de nuevos productos en mercados regionales en una primera etapa.",
+      "image": "/lanzam_t_t.png",
+      "link": "/jobs/3"
+    },
+    {
+      "id": "4",
+      "title": "Gestión de Crisis",
+      "description": "Manejo adecuado de comunicación durante crisis corporativa con impacto en redes sociales y medios tradicionales.",
+      "image": "/gestion_crisis.png",
+      "link": "/jobs/4"
+    },
+    {
+      "id": "14",
+      "title": "Línea línea de productos",
+      "description": "Línea integral de productos para una buena comunicación de marca.",
+      "image": "/linea_tuca_toco.jpg",
+      "link": "/jobs/14"
+    }
+  ]
+} 

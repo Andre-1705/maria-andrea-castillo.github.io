@@ -12,6 +12,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Mail, Phone, MapPin, Instagram, Linkedin, Facebook } from "lucide-react"
 import { VisitorCounter } from "@/components/visitor-counter"
+import { ClientsService } from "@/lib/clients-service"
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -23,6 +24,7 @@ const formSchema = z.object({
   phone: z.string().min(6, {
     message: "Por favor ingresa un número de teléfono válido.",
   }),
+  company: z.string().optional(),
   message: z.string().min(10, {
     message: "El mensaje debe tener al menos 10 caracteres.",
   }),
@@ -39,17 +41,25 @@ export default function ContactPage() {
       name: "",
       email: "",
       phone: "",
+      company: "",
       message: "",
     },
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true)
 
-    // Simulación de envío de formulario
-    setTimeout(() => {
-      console.log(values)
-      setIsSubmitting(false)
+    try {
+      // Guardar cliente en Supabase
+      await ClientsService.createClient({
+        name: values.name,
+        email: values.email,
+        phone: values.phone,
+        company: values.company || undefined,
+        message: values.message,
+        status: 'pending'
+      })
+
       setContactCount((prev) => prev + 1)
 
       toast({
@@ -58,7 +68,16 @@ export default function ContactPage() {
       })
 
       form.reset()
-    }, 1500)
+    } catch (error) {
+      console.error('Error sending message:', error)
+      toast({
+        title: "Error al enviar mensaje",
+        description: "Hubo un problema al enviar tu mensaje. Por favor, intenta de nuevo.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -108,6 +127,19 @@ export default function ContactPage() {
                       <FormLabel>Teléfono</FormLabel>
                       <FormControl>
                         <Input placeholder="+54 9 11 1234-5678" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="company"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Empresa (opcional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nombre de tu empresa" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

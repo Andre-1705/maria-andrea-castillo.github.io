@@ -1,0 +1,260 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useToast } from "@/components/ui/use-toast"
+import { JobsService } from "@/lib/jobs-service"
+import type { Database } from "@/lib/supabase"
+
+type Job = Database['public']['Tables']['jobs']['Row']
+type JobInsert = Database['public']['Tables']['jobs']['Insert']
+
+export function JobAdminPanel() {
+  const [jobs, setJobs] = useState<Job[]>([])
+  const [loading, setLoading] = useState(true)
+  const [editingJob, setEditingJob] = useState<Job | null>(null)
+  const [formData, setFormData] = useState<JobInsert>({
+    title: "",
+    description: "",
+    image: "",
+    video: "",
+    link: "",
+    category: ""
+  })
+  const { toast } = useToast()
+
+  const categories = [
+    "Desarrollo Web",
+    "Comunicación Digital", 
+    "Marketing Digital",
+    "Producción Audiovisual",
+    "Consultoría IT",
+    "Eventos"
+  ]
+
+  useEffect(() => {
+    loadJobs()
+  }, [])
+
+  async function loadJobs() {
+    try {
+      setLoading(true)
+      const data = await JobsService.getAllJobs()
+      setJobs(data)
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los trabajos",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    
+    try {
+      if (editingJob) {
+        await JobsService.updateJob(editingJob.id, formData)
+        toast({
+          title: "Éxito",
+          description: "Trabajo actualizado correctamente"
+        })
+      } else {
+        await JobsService.createJob({
+          ...formData,
+          id: Date.now().toString() // ID temporal
+        })
+        toast({
+          title: "Éxito", 
+          description: "Trabajo creado correctamente"
+        })
+      }
+      
+      setEditingJob(null)
+      setFormData({
+        title: "",
+        description: "",
+        image: "",
+        video: "",
+        link: "",
+        category: ""
+      })
+      loadJobs()
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo guardar el trabajo",
+        variant: "destructive"
+      })
+    }
+  }
+
+  function handleEdit(job: Job) {
+    setEditingJob(job)
+    setFormData({
+      title: job.title,
+      description: job.description,
+      image: job.image,
+      video: job.video || "",
+      link: job.link,
+      category: job.category
+    })
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm("¿Estás seguro de que quieres eliminar este trabajo?")) return
+    
+    try {
+      await JobsService.deleteJob(id)
+      toast({
+        title: "Éxito",
+        description: "Trabajo eliminado correctamente"
+      })
+      loadJobs()
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el trabajo",
+        variant: "destructive"
+      })
+    }
+  }
+
+  if (loading) {
+    return <div>Cargando...</div>
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            {editingJob ? "Editar Trabajo" : "Crear Nuevo Trabajo"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                placeholder="Título"
+                value={formData.title}
+                onChange={(e) => setFormData({...formData, title: e.target.value})}
+                required
+              />
+              <Select
+                value={formData.category}
+                onValueChange={(value) => setFormData({...formData, category: value})}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Categoría" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <Textarea
+              placeholder="Descripción"
+              value={formData.description}
+              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              required
+            />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                placeholder="URL de la imagen"
+                value={formData.image}
+                onChange={(e) => setFormData({...formData, image: e.target.value})}
+                required
+              />
+              <Input
+                placeholder="URL del video (opcional)"
+                value={formData.video}
+                onChange={(e) => setFormData({...formData, video: e.target.value})}
+              />
+            </div>
+            
+            <Input
+              placeholder="Enlace"
+              value={formData.link}
+              onChange={(e) => setFormData({...formData, link: e.target.value})}
+              required
+            />
+            
+            <div className="flex gap-2">
+              <Button type="submit">
+                {editingJob ? "Actualizar" : "Crear"}
+              </Button>
+              {editingJob && (
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  onClick={() => {
+                    setEditingJob(null)
+                    setFormData({
+                      title: "",
+                      description: "",
+                      image: "",
+                      video: "",
+                      link: "",
+                      category: ""
+                    })
+                  }}
+                >
+                  Cancelar
+                </Button>
+              )}
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Trabajos Existentes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {jobs.map((job) => (
+              <div key={job.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <h3 className="font-medium">{job.title}</h3>
+                  <p className="text-sm text-muted-foreground">{job.category}</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => handleEdit(job)}
+                  >
+                    Editar
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="destructive"
+                    onClick={() => handleDelete(job.id)}
+                  >
+                    Eliminar
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+} 

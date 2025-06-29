@@ -9,123 +9,29 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { JobCarousel } from "@/components/job-carousel"
 import { JobUploadForm } from "@/components/job-upload-form"
+import { ClientsAdminPanel } from "@/components/clients-admin-panel"
 import { useToast } from "@/components/ui/use-toast"
-import { LogOut, Plus } from "lucide-react"
+import { JobsService } from "@/lib/jobs-service"
+import { ClientsService } from "@/lib/clients-service"
+import { LogOut, Plus, Users, Briefcase } from "lucide-react"
+import type { Database } from "@/lib/supabase"
 
-// Datos de ejemplo para los carruseles (igual que en la página de jobs)
-const INITIAL_JOBS = {
-  "Desarrollo Web": [
-    {
-      id: "1",
-      title: "Rediseño de Portal Corporativo",
-      description:
-        "Modernización completa del portal web para mejorar la experiencia de usuario y optimizar la conversión.",
-      image: "/placeholder.svg?height=400&width=600",
-      link: "/jobs/1",
-    },
-    {
-      id: "2",
-      title: "E-commerce para Retail",
-      description:
-        "Implementación de plataforma de comercio electrónico con integración a sistemas de inventario y pagos.",
-      image: "/placeholder.svg?height=400&width=600",
-      link: "/jobs/2",
-    },
-  ],
-  "Comunicación Digital": [
-    {
-      id: "3",
-      title: "Campaña de Lanzamiento",
-      description:
-        "Estrategia integral para el lanzamiento de nuevo producto tecnológico en mercados latinoamericanos.",
-      image: "/placeholder.svg?height=400&width=600",
-      link: "/jobs/3",
-    },
-    {
-      id: "4",
-      title: "Gestión de Crisis",
-      description:
-        "Manejo de comunicación durante crisis corporativa con impacto en redes sociales y medios tradicionales.",
-      image: "/placeholder.svg?height=400&width=600",
-      link: "/jobs/4",
-    },
-  ],
-  "Consultoría IT": [
-    {
-      id: "5",
-      title: "Transformación Digital",
-      description:
-        "Asesoría para la implementación de procesos de transformación digital en empresa del sector financiero.",
-      image: "/placeholder.svg?height=400&width=600",
-      link: "/jobs/5",
-    },
-    {
-      id: "6",
-      title: "Optimización de Infraestructura",
-      description: "Análisis y recomendaciones para la mejora de infraestructura tecnológica con enfoque en seguridad.",
-      image: "/placeholder.svg?height=400&width=600",
-      link: "/jobs/6",
-    },
-  ],
-  "Marketing Digital": [
-    {
-      id: "7",
-      title: "Estrategia SEO/SEM",
-      description:
-        "Desarrollo e implementación de estrategia para mejorar posicionamiento en buscadores y aumentar tráfico.",
-      image: "/placeholder.svg?height=400&width=600",
-      link: "/jobs/7",
-    },
-    {
-      id: "8",
-      title: "Campaña en Redes Sociales",
-      description: "Gestión de campaña multicanal en redes sociales para incrementar engagement y conversiones.",
-      image: "/placeholder.svg?height=400&width=600",
-      link: "/jobs/8",
-    },
-  ],
-  "Producción Audiovisual": [
-    {
-      id: "9",
-      title: "Video Corporativo",
-      description: "Producción de video institucional para presentación de servicios y valores de la empresa.",
-      image: "/placeholder.svg?height=400&width=600",
-      link: "/jobs/9",
-    },
-    {
-      id: "10",
-      title: "Serie de Tutoriales",
-      description: "Creación de serie de videos tutoriales para capacitación de usuarios en nueva plataforma.",
-      image: "/placeholder.svg?height=400&width=600",
-      link: "/jobs/10",
-    },
-  ],
-  Eventos: [
-    {
-      id: "11",
-      title: "Conferencia Tecnológica",
-      description: "Organización de conferencia sobre tendencias tecnológicas con ponentes internacionales.",
-      image: "/placeholder.svg?height=400&width=600",
-      link: "/jobs/11",
-    },
-    {
-      id: "12",
-      title: "Webinar Series",
-      description: "Coordinación de serie de webinars sobre transformación digital para ejecutivos de nivel C.",
-      image: "/placeholder.svg?height=400&width=600",
-      link: "/jobs/12",
-    },
-  ],
-}
+type Job = Database['public']['Tables']['jobs']['Row']
 
 export default function AdminDashboardPage() {
   const router = useRouter()
   const { toast } = useToast()
-  const [jobs, setJobs] = useState(INITIAL_JOBS)
+  const [jobs, setJobs] = useState<Record<string, Job[]>>({})
+  const [categories, setCategories] = useState<string[]>([])
   const [isAddingJob, setIsAddingJob] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState(Object.keys(INITIAL_JOBS)[0])
-  const [visitorsCount, setVisitorsCount] = useState("0")
-  const [contactsCount, setContactsCount] = useState("0")
+  const [selectedCategory, setSelectedCategory] = useState("")
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({
+    totalJobs: 0,
+    totalClients: 0,
+    pendingClients: 0,
+    visitorsCount: 0
+  })
 
   // Verificar autenticación
   useEffect(() => {
@@ -133,11 +39,53 @@ export default function AdminDashboardPage() {
       const isAuthenticated = localStorage.getItem("isAuthenticated")
       if (!isAuthenticated) {
         router.push("/admin")
+        return
       }
-      setVisitorsCount(localStorage.getItem("visitorsCount") || "0")
-      setContactsCount(localStorage.getItem("contactsCount") || "0")
+      loadData()
     }
   }, [router])
+
+  async function loadData() {
+    try {
+      setLoading(true)
+      
+      // Cargar datos en paralelo
+      const [categoriesData, clientsStats] = await Promise.all([
+        JobsService.getCategories(),
+        ClientsService.getClientStats()
+      ])
+
+      setCategories(categoriesData)
+      setSelectedCategory(categoriesData[0] || "")
+
+      // Cargar trabajos por categoría
+      const jobsByCategory: Record<string, Job[]> = {}
+      for (const category of categoriesData) {
+        const categoryJobs = await JobsService.getJobsByCategory(category)
+        jobsByCategory[category] = categoryJobs
+      }
+      setJobs(jobsByCategory)
+
+      // Actualizar estadísticas
+      const totalJobs = Object.values(jobsByCategory).reduce((acc, jobs) => acc + jobs.length, 0)
+      setStats({
+        totalJobs,
+        totalClients: clientsStats.total,
+        pendingClients: clientsStats.pending,
+        visitorsCount: parseInt(localStorage.getItem("visitorsCount") || "0")
+      })
+
+    } catch (error) {
+      console.error('Error loading dashboard data:', error)
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los datos del dashboard.",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
@@ -146,50 +94,62 @@ export default function AdminDashboardPage() {
     router.push("/admin")
   }
 
-  const handleDeleteJob = (id: string) => {
-    // Crear una copia profunda del objeto jobs
-    const updatedJobs = JSON.parse(JSON.stringify(jobs))
-
-    // Encontrar la categoría que contiene el trabajo a eliminar
-    Object.keys(updatedJobs).forEach((category) => {
-      updatedJobs[category] = updatedJobs[category].filter((job: any) => job.id !== id)
-    })
-
-    setJobs(updatedJobs)
-
-    toast({
-      title: "Trabajo eliminado",
-      description: "El trabajo ha sido eliminado correctamente.",
-    })
+  const handleDeleteJob = async (id: string) => {
+    try {
+      await JobsService.deleteJob(id)
+      await loadData() // Recargar datos
+      toast({
+        title: "Trabajo eliminado",
+        description: "El trabajo ha sido eliminado correctamente.",
+      })
+    } catch (error) {
+      console.error('Error deleting job:', error)
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el trabajo.",
+        variant: "destructive"
+      })
+    }
   }
 
-  const handleAddJob = (newJob: any) => {
-    // Crear una copia profunda del objeto jobs
-    const updatedJobs = JSON.parse(JSON.stringify(jobs))
-
-    // Generar un ID único
-    const newId = Date.now().toString()
-
-    // Añadir el nuevo trabajo a la categoría seleccionada
-    updatedJobs[selectedCategory] = [
-      ...updatedJobs[selectedCategory],
-      {
-        id: newId,
+  const handleAddJob = async (newJob: any) => {
+    try {
+      await JobsService.createJob({
         ...newJob,
-        link: `/jobs/${newId}`,
-      },
-    ]
+        category: selectedCategory,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      
+      await loadData() // Recargar datos
+      setIsAddingJob(false)
 
-    setJobs(updatedJobs)
-    setIsAddingJob(false)
-
-    toast({
-      title: "Trabajo añadido",
-      description: "El nuevo trabajo ha sido añadido correctamente.",
-    })
+      toast({
+        title: "Trabajo añadido",
+        description: "El nuevo trabajo ha sido añadido correctamente.",
+      })
+    } catch (error) {
+      console.error('Error adding job:', error)
+      toast({
+        title: "Error",
+        description: "No se pudo agregar el trabajo.",
+        variant: "destructive"
+      })
+    }
   }
 
-  const categories = Object.keys(jobs)
+  if (loading) {
+    return (
+      <div className="container py-12">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Cargando dashboard...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="container py-12">
@@ -201,72 +161,134 @@ export default function AdminDashboardPage() {
         </Button>
       </div>
 
-      <div className="grid gap-6">
-        <Card className="bg-black/50 border-white/10">
-          <CardHeader>
-            <CardTitle>Gestión de Trabajos</CardTitle>
-            <CardDescription>Administra los trabajos que se muestran en la sección Jobs.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isAddingJob ? (
-              <JobUploadForm
-                categories={categories}
-                selectedCategory={selectedCategory}
-                onCategoryChange={setSelectedCategory}
-                onSubmit={handleAddJob}
-                onCancel={() => setIsAddingJob(false)}
-              />
-            ) : (
-              <div className="mb-6">
-                <Button onClick={() => setIsAddingJob(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Añadir nuevo trabajo
-                </Button>
+      {/* Estadísticas generales */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Briefcase className="h-5 w-5 text-primary" />
+              <div>
+                <div className="text-2xl font-bold">{stats.totalJobs}</div>
+                <p className="text-xs text-muted-foreground">Trabajos</p>
               </div>
-            )}
-
-            <Tabs defaultValue={categories[0]} className="w-full">
-              <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 mb-8">
-                {categories.map((category) => (
-                  <TabsTrigger
-                    key={category}
-                    value={category}
-                    className="text-sm"
-                    onClick={() => setSelectedCategory(category)}
-                  >
-                    {category}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-
-              {categories.map((category) => (
-                <TabsContent key={category} value={category} className="mt-4">
-                  <JobCarousel title={category} jobs={jobs[category]} isAdmin={true} onDelete={handleDeleteJob} />
-                </TabsContent>
-              ))}
-            </Tabs>
+            </div>
           </CardContent>
         </Card>
-
-        <Card className="bg-black/50 border-white/10">
-          <CardHeader>
-            <CardTitle>Estadísticas del Sitio</CardTitle>
-            <CardDescription>Información sobre visitantes y contactos recibidos.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 bg-black/30 rounded-lg">
-                <h3 className="text-lg font-medium mb-2">Visitantes Totales</h3>
-                <p className="text-3xl font-bold">{visitorsCount}</p>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              <div>
+                <div className="text-2xl font-bold">{stats.totalClients}</div>
+                <p className="text-xs text-muted-foreground">Clientes</p>
               </div>
-              <div className="p-4 bg-black/30 rounded-lg">
-                <h3 className="text-lg font-medium mb-2">Contactos Recibidos</h3>
-                <p className="text-3xl font-bold">{contactsCount}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-yellow-500" />
+              <div>
+                <div className="text-2xl font-bold text-yellow-500">{stats.pendingClients}</div>
+                <p className="text-xs text-muted-foreground">Pendientes</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-blue-500" />
+              <div>
+                <div className="text-2xl font-bold text-blue-500">{stats.visitorsCount}</div>
+                <p className="text-xs text-muted-foreground">Visitantes</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      <Tabs defaultValue="jobs" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="jobs" className="flex items-center gap-2">
+            <Briefcase className="h-4 w-4" />
+            Gestión de Trabajos
+          </TabsTrigger>
+          <TabsTrigger value="clients" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Gestión de Clientes
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="jobs" className="mt-6">
+          <div className="space-y-6">
+            {/* Formulario para agregar trabajos */}
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Agregar Nuevo Trabajo</CardTitle>
+                    <CardDescription>
+                      Añade un nuevo proyecto a tu portafolio
+                    </CardDescription>
+                  </div>
+                  <Button
+                    onClick={() => setIsAddingJob(!isAddingJob)}
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    {isAddingJob ? "Cancelar" : "Agregar Trabajo"}
+                  </Button>
+                </div>
+              </CardHeader>
+              {isAddingJob && (
+                <CardContent>
+                  <JobUploadForm
+                    categories={categories}
+                    selectedCategory={selectedCategory}
+                    onCategoryChange={setSelectedCategory}
+                    onSubmit={handleAddJob}
+                    onCancel={() => setIsAddingJob(false)}
+                  />
+                </CardContent>
+              )}
+            </Card>
+
+            {/* Gestión de trabajos existentes */}
+            {categories.length > 0 ? (
+              <Tabs defaultValue={categories[0]} className="w-full">
+                <TabsList className="flex justify-between mb-8">
+                  {categories.map((category) => (
+                    <TabsTrigger key={category} value={category} className="flex-1 mx-1 text-base font-medium min-w-0">
+                      {category}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+
+                {categories.map((category) => (
+                  <TabsContent key={category} value={category} className="mt-4">
+                    <JobCarousel 
+                      title={category} 
+                      jobs={jobs[category] || []} 
+                      isAdmin={true}
+                      onDelete={handleDeleteJob}
+                    />
+                  </TabsContent>
+                ))}
+              </Tabs>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">No hay categorías disponibles.</p>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="clients" className="mt-6">
+          <ClientsAdminPanel />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
