@@ -172,7 +172,6 @@ CREATE TABLE contact_submissions (
 
 ---
 
-¿Quieres que agregue alguna sección específica o detalle técnico adicional? 
 
 ## 15/07/2025 - Solución definitiva error 'fs' y separación cliente/servidor
 

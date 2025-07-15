@@ -7,9 +7,18 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/use-toast"
 import { Mail, Phone, Building, Calendar, MessageSquare, CheckCircle, XCircle, Clock, UserCheck } from "lucide-react"
-import type { Database } from "@/lib/supabase"
 
-type Client = Database['public']['Tables']['clients']['Row']
+type Client = {
+  id: string
+  name: string
+  email: string
+  phone?: string
+  company?: string
+  message: string
+  status: 'pending' | 'contacted' | 'completed' | 'rejected'
+  created_at: string
+  updated_at: string
+}
 
 const statusConfig = {
   pending: { label: 'Pendiente', color: 'bg-yellow-500', icon: Clock },

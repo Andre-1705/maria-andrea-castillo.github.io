@@ -58,11 +58,11 @@ export default function ContactPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: values.name,
-          email: values.email,
-          phone: values.phone,
+        name: values.name,
+        email: values.email,
+        phone: values.phone,
           company: values.company,
-          message: values.message,
+        message: values.message,
         }),
       });
 

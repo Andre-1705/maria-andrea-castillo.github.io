@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { X } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast"
 
 const formSchema = z.object({
   title: z.string().min(2, {
@@ -19,8 +20,15 @@ const formSchema = z.object({
   description: z.string().min(10, {
     message: "La descripción debe tener al menos 10 caracteres.",
   }),
-  image: z.string().url({
-    message: "Por favor ingresa una URL de imagen válida.",
+  image: z.string()
+    .regex(/^[a-zA-Z0-9_\-]+\.(png|jpg|jpeg|webp|gif)$/i, {
+      message: "Por favor ingresa solo el nombre del archivo de imagen (ej: imagen.png)",
+    }),
+  link: z.string().min(2, {
+    message: "El enlace es obligatorio. Ej: /jobs/25 o https://...",
+  }),
+  category: z.string().min(2, {
+    message: "La categoría es obligatoria.",
   }),
 })
 
@@ -40,24 +48,52 @@ export function JobUploadForm({
   onCancel,
 }: JobUploadFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { toast } = useToast()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
       description: "",
-      image: "/placeholder.svg?height=400&width=600", // Valor por defecto
+      image: "",
+      link: "",
+      category: categories[0] || "",
     },
   })
 
   function handleSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true)
-
-    // Simulación de carga
-    setTimeout(() => {
-      onSubmit(values)
-      setIsSubmitting(false)
-    }, 1000)
+    const data = { ...values, image: `/${values.image}` }
+    fetch("/api/jobs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+      .then(async (res) => {
+        const result = await res.json()
+        if (result.success) {
+          toast({
+            title: "Trabajo guardado",
+            description: "El trabajo se guardó correctamente.",
+            variant: "default"
+          })
+          // No limpiar ni cerrar el formulario aquí para que el usuario vea el toast
+        } else {
+          toast({
+            title: "Error al guardar",
+            description: result.error || "No se pudo guardar el trabajo.",
+            variant: "destructive"
+          })
+        }
+      })
+      .catch(() => {
+        toast({
+          title: "Error de red",
+          description: "No se pudo conectar con el servidor.",
+          variant: "destructive"
+        })
+      })
+      .finally(() => setIsSubmitting(false))
   }
 
   return (
@@ -88,21 +124,28 @@ export function JobUploadForm({
                   )}
                 />
 
-                <div className="space-y-2">
-                  <FormLabel>Categoría</FormLabel>
-                  <Select value={selectedCategory} onValueChange={onCategoryChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona una categoría" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Categoría</FormLabel>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona una categoría" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               <FormField
@@ -124,9 +167,23 @@ export function JobUploadForm({
                 name="image"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>URL de la imagen</FormLabel>
+                    <FormLabel>Nombre del archivo de imagen</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://ejemplo.com/imagen.jpg" {...field} />
+                      <Input placeholder="ej: analisis_de_metricas.png" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="link"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Enlace</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ej: /jobs/25 o https://sitio.com/trabajo" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

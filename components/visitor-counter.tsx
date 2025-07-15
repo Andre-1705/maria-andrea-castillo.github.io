@@ -10,24 +10,22 @@ export function VisitorCounter({ type }: VisitorCounterProps) {
   const [count, setCount] = useState(0)
 
   useEffect(() => {
-    // En una implementación real, esto se conectaría a una API
-    // para obtener y actualizar el contador
-    const storedCount = localStorage.getItem(`${type}Count`)
-    const initialCount = storedCount ? Number.parseInt(storedCount, 10) : 0
-
-    if (type === "visitors") {
-      // Incrementar contador de visitantes solo una vez por sesión
-      const hasVisited = sessionStorage.getItem("hasVisited")
-      if (!hasVisited) {
-        const newCount = initialCount + 1
-        setCount(newCount)
-        localStorage.setItem(`${type}Count`, newCount.toString())
-        sessionStorage.setItem("hasVisited", "true")
-      } else {
-        setCount(initialCount)
-      }
+    const sessionKey = type === "visitors" ? "hasVisited" : "hasContacted"
+    const hasVisited = sessionStorage.getItem(sessionKey)
+    const url = `/api/visitors?type=${type}`
+    if (!hasVisited) {
+      // Primera visita/contacto de la sesión: incrementa el contador real
+      fetch(url, { method: "POST" })
+        .then(res => res.json())
+        .then(data => {
+          setCount(data.count)
+          sessionStorage.setItem(sessionKey, "true")
+        })
     } else {
-      setCount(initialCount)
+      // Ya visitó/contactó en la sesión: solo obtiene el contador
+      fetch(url)
+        .then(res => res.json())
+        .then(data => setCount(data.count))
     }
   }, [type])
 
