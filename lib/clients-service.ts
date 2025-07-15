@@ -1,110 +1,51 @@
-import { supabase } from './supabase'
-import type { Database } from './supabase'
+import { DatabaseServiceFactory } from './database/factory'
+import type { ContactSubmission, ContactSubmissionInsert, ContactSubmissionUpdate } from './types/database'
 
-type Client = Database['public']['Tables']['clients']['Row']
-type ClientInsert = Database['public']['Tables']['clients']['Insert']
-type ClientUpdate = Database['public']['Tables']['clients']['Update']
-
+// Wrapper para mantener compatibilidad con el código existente
 export class ClientsService {
-  // Obtener todos los clientes
-  static async getAllClients(): Promise<Client[]> {
-    const { data, error } = await supabase
-      .from('clients')
-      .select('*')
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      console.error('Error fetching clients:', error)
-      throw error
-    }
-
-    return data || []
+  // Obtener todos los contactos
+  static async getAllClients(): Promise<ContactSubmission[]> {
+    const service = DatabaseServiceFactory.getClientsService()
+    return service.getAllClients()
   }
 
-  // Obtener clientes por estado
-  static async getClientsByStatus(status: Client['status']): Promise<Client[]> {
-    const { data, error } = await supabase
-      .from('clients')
-      .select('*')
-      .eq('status', status)
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      console.error('Error fetching clients by status:', error)
-      throw error
-    }
-
-    return data || []
+  // Obtener contactos por estado
+  static async getClientsByStatus(status: ContactSubmission['status']): Promise<ContactSubmission[]> {
+    const service = DatabaseServiceFactory.getClientsService()
+    return service.getClientsByStatus(status)
   }
 
-  // Obtener un cliente por ID
-  static async getClientById(id: string): Promise<Client | null> {
-    const { data, error } = await supabase
-      .from('clients')
-      .select('*')
-      .eq('id', id)
-      .single()
-
-    if (error) {
-      console.error('Error fetching client:', error)
-      throw error
-    }
-
-    return data
+  // Obtener un contacto por ID
+  static async getClientById(id: string): Promise<ContactSubmission | null> {
+    const service = DatabaseServiceFactory.getClientsService()
+    return service.getClientById(id)
   }
 
-  // Crear un nuevo cliente
-  static async createClient(client: ClientInsert): Promise<Client> {
-    const { data, error } = await supabase
-      .from('clients')
-      .insert(client)
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Error creating client:', error)
-      throw error
-    }
-
-    return data
+  // Crear un nuevo contacto
+  static async createClient(client: ContactSubmissionInsert): Promise<ContactSubmission> {
+    const service = DatabaseServiceFactory.getClientsService()
+    return service.createClient(client)
   }
 
-  // Actualizar un cliente
-  static async updateClient(id: string, updates: ClientUpdate): Promise<Client> {
-    const { data, error } = await supabase
-      .from('clients')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Error updating client:', error)
-      throw error
-    }
-
-    return data
+  // Actualizar un contacto
+  static async updateClient(id: string, updates: ContactSubmissionUpdate): Promise<ContactSubmission> {
+    const service = DatabaseServiceFactory.getClientsService()
+    return service.updateClient(id, updates)
   }
 
-  // Eliminar un cliente
+  // Eliminar un contacto
   static async deleteClient(id: string): Promise<void> {
-    const { error } = await supabase
-      .from('clients')
-      .delete()
-      .eq('id', id)
-
-    if (error) {
-      console.error('Error deleting client:', error)
-      throw error
-    }
+    const service = DatabaseServiceFactory.getClientsService()
+    return service.deleteClient(id)
   }
 
-  // Cambiar estado de un cliente
-  static async updateClientStatus(id: string, status: Client['status']): Promise<Client> {
-    return this.updateClient(id, { status })
+  // Cambiar estado de un contacto
+  static async updateClientStatus(id: string, status: ContactSubmission['status']): Promise<ContactSubmission> {
+    const service = DatabaseServiceFactory.getClientsService()
+    return service.updateClientStatus(id, status)
   }
 
-  // Obtener estadísticas de clientes
+  // Obtener estadísticas de contactos
   static async getClientStats(): Promise<{
     total: number
     pending: number
@@ -112,24 +53,7 @@ export class ClientsService {
     completed: number
     rejected: number
   }> {
-    const { data, error } = await supabase
-      .from('clients')
-      .select('status')
-
-    if (error) {
-      console.error('Error fetching client stats:', error)
-      throw error
-    }
-
-    const clients = data || []
-    const stats = {
-      total: clients.length,
-      pending: clients.filter(c => c.status === 'pending').length,
-      contacted: clients.filter(c => c.status === 'contacted').length,
-      completed: clients.filter(c => c.status === 'completed').length,
-      rejected: clients.filter(c => c.status === 'rejected').length,
-    }
-
-    return stats
+    const service = DatabaseServiceFactory.getClientsService()
+    return service.getClientStats()
   }
 } 

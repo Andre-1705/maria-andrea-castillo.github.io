@@ -79,6 +79,41 @@ export interface Database {
           updated_at?: string
         }
       }
+      contact_submissions: {
+        Row: {
+          id: number
+          name: string
+          email: string
+          phone?: string | null
+          company?: string | null
+          message: string
+          status?: string // acepta 'unread'
+          created_at: string
+          // updated_at no existe
+        }
+        Insert: {
+          id?: number
+          name: string
+          email: string
+          phone?: string | null
+          company?: string | null
+          message: string
+          status?: string // acepta 'unread'
+          created_at?: string
+          // updated_at no existe
+        }
+        Update: {
+          id?: number
+          name?: string
+          email?: string
+          phone?: string | null
+          company?: string | null
+          message?: string
+          status?: string
+          created_at?: string
+          // updated_at no existe
+        }
+      }
     }
   }
 } 

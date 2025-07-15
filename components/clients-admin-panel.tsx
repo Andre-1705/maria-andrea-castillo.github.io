@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/use-toast"
-import { ClientsService } from "@/lib/clients-service"
 import { Mail, Phone, Building, Calendar, MessageSquare, CheckCircle, XCircle, Clock, UserCheck } from "lucide-react"
 import type { Database } from "@/lib/supabase"
 
@@ -39,8 +38,8 @@ export function ClientsAdminPanel() {
     try {
       setLoading(true)
       const [clientsData, statsData] = await Promise.all([
-        ClientsService.getAllClients(),
-        ClientsService.getClientStats()
+        fetch('/api/clients').then(res => res.json()),
+        fetch('/api/clients/stats').then(res => res.json())
       ])
       setClients(clientsData)
       setStats(statsData)
@@ -58,7 +57,13 @@ export function ClientsAdminPanel() {
 
   async function updateClientStatus(clientId: string, newStatus: Client['status']) {
     try {
-      await ClientsService.updateClientStatus(clientId, newStatus)
+      await fetch(`/api/clients/${clientId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      })
       await loadClients() // Recargar datos
       toast({
         title: "Estado actualizado",
@@ -80,7 +85,9 @@ export function ClientsAdminPanel() {
     }
 
     try {
-      await ClientsService.deleteClient(clientId)
+      await fetch(`/api/clients/${clientId}`, {
+        method: 'DELETE',
+      })
       await loadClients() // Recargar datos
       toast({
         title: "Cliente eliminado",

@@ -34,6 +34,7 @@ export default function ContactPage() {
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [contactCount, setContactCount] = useState(0)
+  const [success, setSuccess] = useState(false)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -50,17 +51,35 @@ export default function ContactPage() {
     setIsSubmitting(true)
 
     try {
-      // Guardar cliente en Supabase
-      await ClientsService.createClient({
-        name: values.name,
-        email: values.email,
-        phone: values.phone,
-        company: values.company || undefined,
-        message: values.message,
-        status: 'pending'
-      })
+      // Enviar datos al endpoint local de Next.js
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: values.name,
+          email: values.email,
+          phone: values.phone,
+          company: values.company,
+          message: values.message,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error al enviar el formulario:', errorText);
+        toast({
+          title: "Error al enviar mensaje",
+          description: errorText || "Hubo un problema al enviar tu mensaje. Por favor, intenta de nuevo.",
+          variant: "destructive"
+        })
+        setIsSubmitting(false)
+        return;
+      }
 
       setContactCount((prev) => prev + 1)
+      setSuccess(true)
 
       toast({
         title: "Mensaje enviado",
@@ -69,7 +88,7 @@ export default function ContactPage() {
 
       form.reset()
     } catch (error) {
-      console.error('Error sending message:', error)
+      console.error('Error inesperado:', error)
       toast({
         title: "Error al enviar mensaje",
         description: "Hubo un problema al enviar tu mensaje. Por favor, intenta de nuevo.",
@@ -162,6 +181,11 @@ export default function ContactPage() {
                   {isSubmitting ? "Enviando..." : "Enviar mensaje"}
                 </Button>
               </form>
+              {success && (
+                <p className="text-green-600 font-semibold text-center mt-4">
+                  ¡Tu formulario fue enviado exitosamente!
+                </p>
+              )}
             </Form>
           </CardContent>
         </Card>
@@ -190,24 +214,24 @@ export default function ContactPage() {
                 <h3 className="text-sm font-medium mb-3">Redes sociales</h3>
                 <div className="flex gap-4">
                   <Button variant="outline" size="icon" asChild>
-                    <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer">
+                    <a href="https://www.linkedin.com/in/mariaandreacastillo/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
                       <Linkedin className="h-5 w-5" />
                     </a>
                   </Button>
                   <Button variant="outline" size="icon" asChild>
-                    <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+                    <a href="https://www.tiktok.com/@maria.andrea.castillo" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
                         <path d="M12.75 2.25h2.25a.75.75 0 0 1 .75.75v2.25a3.75 3.75 0 0 0 3.75 3.75h.75a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-.75.75h-1.5v4.5a6.75 6.75 0 1 1-6.75-6.75.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-.75.75 2.25 2.25 0 1 0 2.25 2.25V2.25z" />
                       </svg>
                     </a>
                   </Button>
                   <Button variant="outline" size="icon" asChild>
-                    <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">
+                    <a href="https://www.instagram.com/maria.andrea.castillo/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
                       <Instagram className="h-5 w-5" />
                     </a>
                   </Button>
                   <Button variant="outline" size="icon" asChild>
-                    <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">
+                    <a href="https://www.facebook.com/mariaandreacastilllo" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
                       <Facebook className="h-5 w-5" />
                     </a>
                   </Button>

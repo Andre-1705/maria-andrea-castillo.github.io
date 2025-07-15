@@ -34,22 +34,51 @@
   npm uninstall -g ts-node
   ```
 
-## Configuración de Supabase
+---
 
-### 1. Variables de Entorno
-Crear archivo `.env.local` en la raíz del proyecto:
+## Configuración de variables de entorno
+
+### (Comentado) Supabase
 ```env
-NEXT_PUBLIC_SUPABASE_URL=tu_url_de_supabase
-NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_clave_anonima_de_supabase
+# NEXT_PUBLIC_SUPABASE_URL=tu_url_de_supabase
+# NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_clave_anonima_de_supabase
 ```
 
-### 2. Crear Tablas en Supabase
-Ejecutar el SQL del archivo `SUPABASE_SETUP.md` en el editor SQL de Supabase.
-
-### 3. Migrar Datos de Ejemplo
-```bash
-npx ts-node --esm scripts/migrate-jobs.mts
+### PostgreSQL (recomendado)
+```env
+DATABASE_TYPE=postgresql
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DATABASE=portfolio
+POSTGRES_USERNAME=tu_usuario
+POSTGRES_PASSWORD=tu_contraseña
+POSTGRES_SSL=false
 ```
+> También puedes usar un connection string:
+> `POSTGRES_CONNECTION_STRING=postgresql://usuario:contraseña@host:puerto/base_de_datos`
+
+---
+
+## Arquitectura de Base de Datos (Multi-DB)
+
+El proyecto ahora soporta varias bases de datos, siendo **PostgreSQL puro** la opción recomendada y por defecto.  
+Puedes cambiar de base de datos solo modificando la variable `DATABASE_TYPE` en tu `.env.local`.
+
+### Opciones soportadas:
+- **PostgreSQL** (recomendado)
+- Supabase (PostgreSQL + servicios extra)
+- MongoDB (NoSQL)
+- MySQL (preparado)
+- SQLite (preparado)
+
+### Esquema de base de datos
+El archivo `lib/database/schema.sql` contiene el SQL para crear las tablas y triggers necesarios en PostgreSQL.
+
+### Cambiar de base de datos
+Solo cambia la variable `DATABASE_TYPE` y ajusta las variables de entorno correspondientes.  
+El código de la app no necesita cambios.
+
+---
 
 ## Comandos útiles del proyecto
 
@@ -61,84 +90,77 @@ npx ts-node --esm scripts/migrate-jobs.mts
   ```bash
   npx ts-node --esm archivo.ts
   ```
-- Migrar datos de ejemplo a Supabase:
+- Migrar datos de ejemplo:
   ```bash
   npx ts-node --esm scripts/migrate-jobs.mts
   ```
 
-## Nuevas Funcionalidades Implementadas
+---
 
-### Gestión de Clientes
-- **Tabla `clients`** en Supabase con campos:
-  - `id` (UUID, auto-generado)
-  - `name` (texto, obligatorio)
-  - `email` (texto, único, obligatorio)
-  - `phone` (texto, opcional)
-  - `company` (texto, opcional)
-  - `message` (texto, obligatorio)
-  - `status` (enum: pending, contacted, completed, rejected)
-  - `created_at` y `updated_at` (timestamps)
+## Servicios y Componentes
 
-### Servicios Creados
-- **`ClientsService`** (`lib/clients-service.ts`):
-  - CRUD completo para clientes
-  - Filtrado por estado
-  - Estadísticas de clientes
-  - Gestión de estados
+### Servicios
+- **`JobsService`** y **`ClientsService`**:  
+  Acceso unificado a la base de datos, independiente del motor elegido.
+- Implementaciones específicas en `lib/database/` para cada motor.
 
 ### Componentes Nuevos
-- **`ClientsAdminPanel`** (`components/clients-admin-panel.tsx`):
-  - Panel de administración de clientes
-  - Filtros por estado
-  - Estadísticas en tiempo real
-  - Gestión de estados de clientes
+- **`ClientsAdminPanel`** (`components/clients-admin-panel.tsx`):  
+  Panel de administración de clientes, filtros, estadísticas y gestión de estados.
+- **`JobAdminPanel`** (`components/job-admin-panel.tsx`):  
+  Panel de administración de trabajos.
 
 ### Páginas Actualizadas
-- **`/contact`**: Ahora guarda datos en Supabase
-- **`/admin/dashboard`**: Incluye gestión de clientes
-- **Formulario de contacto**: Campo de empresa agregado
+- **`/contact`**: Guarda datos en la base seleccionada.
+- **`/admin/dashboard`**: Gestión de clientes y trabajos.
 
-## Estructura de la Base de Datos
+---
 
-### Tabla `jobs` (existente)
+## Estructura de la Base de Datos (PostgreSQL)
+
+### Tabla `jobs`
 ```sql
 CREATE TABLE jobs (
-  id TEXT PRIMARY KEY,
-  title TEXT NOT NULL,
+  id VARCHAR(255) PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
   description TEXT NOT NULL,
-  image TEXT NOT NULL,
-  video TEXT,
-  link TEXT NOT NULL,
-  category TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  image VARCHAR(500) NOT NULL,
+  video VARCHAR(500),
+  link VARCHAR(500) NOT NULL,
+  category VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
-### Tabla `clients` (nueva)
+### Tabla `contact_submissions`
 ```sql
-CREATE TABLE clients (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name TEXT NOT NULL,
-  email TEXT NOT NULL UNIQUE,
-  phone TEXT,
-  company TEXT,
+CREATE TABLE contact_submissions (
+  id VARCHAR(255) PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  phone VARCHAR(50),
+  company VARCHAR(255),
   message TEXT NOT NULL,
-  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'contacted', 'completed', 'rejected')),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'contacted', 'completed', 'rejected', 'unread')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 ```
+
+---
 
 ## Flujo de Trabajo con Clientes
 
 1. **Cliente envía mensaje** desde `/contact`
-2. **Datos se guardan** en tabla `clients` con estado `pending`
-3. **Admin ve mensajes** en `/admin/dashboard` → pestaña "Gestión de Clientes"
+2. **Datos se guardan** en la tabla `contact_submissions` con estado `pending`
+3. **Admin ve mensajes** en `/admin/dashboard`
 4. **Admin gestiona estados**:
    - `pending` → `contacted` (cuando responde)
    - `contacted` → `completed` (cuando finaliza)
    - `pending` → `rejected` (si no interesa)
+
+---
 
 ## Buenas prácticas
 - Usar siempre `npx` para ejecutar herramientas instaladas localmente.
@@ -146,7 +168,16 @@ CREATE TABLE clients (
 - Verificar que las variables de entorno estén configuradas antes de ejecutar.
 - Los datos de clientes se guardan automáticamente al enviar el formulario de contacto.
 - El panel de administración muestra estadísticas en tiempo real.
+- Actualiza este archivo cada vez que instales o uses una herramienta nueva, o si tienes dudas sobre cómo actualizar algo, ¡pregúntame!
 
 ---
 
-*Actualiza este archivo cada vez que instales o uses una herramienta nueva, o si tienes dudas sobre cómo actualizar algo, ¡pregúntame!* 
+¿Quieres que agregue alguna sección específica o detalle técnico adicional? 
+
+## 15/07/2025 - Solución definitiva error 'fs' y separación cliente/servidor
+
+- Se eliminaron todos los imports de servicios de base de datos (`JobsService`, `ClientsService`, etc.) en componentes cliente (`dashboard-client.tsx`, `clients-admin-panel.tsx`).
+- Ahora, los componentes cliente solo usan `fetch` para interactuar con la API (endpoints en `/api/jobs` y `/api/clients`).
+- Todo el acceso a la base de datos ocurre exclusivamente en Server Components o en endpoints API.
+- Esto soluciona definitivamente el error `Module not found: Can't resolve 'fs'` y asegura compatibilidad total con Next.js.
+- El dashboard y el panel de clientes funcionan correctamente y son seguros para el entorno de producción. 
