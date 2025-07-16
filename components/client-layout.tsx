@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import type React from "react"
-import Navbar from "@/components/navbar"
-import { ThemeProvider } from "@/components/theme-provider"
-import { Toaster } from "@/components/ui/toaster"
-import { Analytics } from "@/components/analytics"
-import { Suspense } from "react"
+import type React from "react";
+import Navbar from "@/components/navbar";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/toaster";
+import { Analytics } from "@/components/analytics";
+import { Suspense } from "react";
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -21,5 +21,5 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
         </div>
       </Suspense>
     </ThemeProvider>
-  )
+  );
 } 

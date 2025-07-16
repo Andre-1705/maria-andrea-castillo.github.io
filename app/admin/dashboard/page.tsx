@@ -1,12 +1,10 @@
-import { AdminDashboardClient } from "./dashboard-client"
-
 export const dynamic = "force-dynamic"
 
 export default async function AdminDashboardPage() {
   // Obtener datos en el servidor usando fetch con URL absoluta
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
   const jobsRes = await fetch(`${baseUrl}/api/jobs`);
-  const jobsByCategory = await jobsRes.json();
+  const jobsByCategory: Record<string, any[]> = await jobsRes.json();
   const categoriesData = Object.keys(jobsByCategory);
   const clientsStatsRes = await fetch(`${baseUrl}/api/clients/stats`);
   const clientsStats = await clientsStatsRes.json();
@@ -17,12 +15,7 @@ export default async function AdminDashboardPage() {
     "Producción Audiovisual",
     // "Otros" // Oculto temporalmente
   ];
-  const orderedCategories = customOrder.filter(cat => categoriesData.includes(cat))
-  const stats = {
-    totalJobs: Object.values(jobsByCategory).reduce((acc, jobs) => acc + jobs.length, 0),
-    totalClients: clientsStats.total,
-    pendingClients: clientsStats.pending,
-    visitorsCount: 0 // Se puede actualizar en el cliente
-  }
-  return <AdminDashboardClient jobs={jobsByCategory} categories={orderedCategories} stats={stats} />
+  const orderedCategories = customOrder.filter(cat => categoriesData.includes(cat));
+  // Renderizar el dashboard aquí o retornar null si no hay contenido
+  return null;
 }
