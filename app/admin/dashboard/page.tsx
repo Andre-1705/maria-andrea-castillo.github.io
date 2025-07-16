@@ -1,13 +1,14 @@
-import { JobsService } from "@/lib/jobs-service"
-import { ClientsService } from "@/lib/clients-service"
 import { AdminDashboardClient } from "./dashboard-client"
 
 export const dynamic = "force-dynamic"
 
 export default async function AdminDashboardPage() {
-  // Obtener datos en el servidor
-  const categoriesData = await JobsService.getCategories()
-  const clientsStats = await ClientsService.getClientStats()
+  // Obtener datos en el servidor usando fetch
+  const jobsRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/jobs`)
+  const jobsByCategory = await jobsRes.json()
+  const categoriesData = Object.keys(jobsByCategory)
+  const clientsStatsRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/clients/stats`)
+  const clientsStats = await clientsStatsRes.json()
   const customOrder = [
     "Desarrollo Web",
     "Comunicación Digital",
@@ -16,10 +17,6 @@ export default async function AdminDashboardPage() {
     // "Otros" // Oculto temporalmente
   ];
   const orderedCategories = customOrder.filter(cat => categoriesData.includes(cat))
-  const jobsByCategory = {};
-  for (const category of orderedCategories) {
-    jobsByCategory[category] = await JobsService.getJobsByCategory(category)
-  }
   const stats = {
     totalJobs: Object.values(jobsByCategory).reduce((acc, jobs) => acc + jobs.length, 0),
     totalClients: clientsStats.total,

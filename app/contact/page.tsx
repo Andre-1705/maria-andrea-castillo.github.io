@@ -12,7 +12,6 @@ import { useToast } from "@/components/ui/use-toast"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Mail, Phone, MapPin, Instagram, Linkedin, Facebook } from "lucide-react"
 import { VisitorCounter } from "@/components/visitor-counter"
-import { ClientsService } from "@/lib/clients-service"
 
 const formSchema = z.object({
   name: z.string().min(2, {

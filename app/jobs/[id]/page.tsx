@@ -4,13 +4,15 @@ import { useState, useEffect } from "react"
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { JobsService } from "@/lib/jobs-service"
 import type { Database } from "@/lib/supabase"
 import { useToast } from "@/components/ui/use-toast"
 
 type Job = Database['public']['Tables']['jobs']['Row']
 
-export default function JobDetailPage({ params }: { params: { id: string } }) {
+export default async function JobPage({ params }) {
+  // Obtener datos del trabajo por ID usando fetch
+  const res = await fetch(`/api/jobs/${params.id}`)
+  const jobData = await res.json()
   const [job, setJob] = useState<Job | null>(null)
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
@@ -19,7 +21,6 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
     async function loadJob() {
       try {
         setLoading(true)
-        const jobData = await JobsService.getJobById(params.id)
         setJob(jobData)
       } catch (error) {
         console.error('Error loading job:', error)

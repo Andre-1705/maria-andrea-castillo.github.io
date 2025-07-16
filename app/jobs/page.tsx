@@ -2,11 +2,12 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { JobCarousel } from "@/components/job-carousel"
-import { JobsService } from "@/lib/jobs-service"
 
 export default async function JobsPage() {
-  // Cargar categorías
-  const categoriesData = await JobsService.getCategories()
+  // Obtener trabajos agrupados por categoría usando fetch
+  const res = await fetch('/api/jobs')
+  const jobsByCategory = await res.json()
+  const categoriesData = Object.keys(jobsByCategory)
   const customOrder = [
     "Desarrollo Web",
     "Comunicación Digital",
@@ -15,13 +16,6 @@ export default async function JobsPage() {
     // "Otros" // Oculto temporalmente
   ];
   const orderedCategories = customOrder.filter(cat => categoriesData.includes(cat))
-
-  // Cargar trabajos por categoría
-  const jobsByCategory: Record<string, any[]> = {}
-  for (const category of orderedCategories) {
-    const categoryJobs = await JobsService.getJobsByCategory(category)
-    jobsByCategory[category] = categoryJobs
-  }
 
   return (
     <div className="container py-12">
