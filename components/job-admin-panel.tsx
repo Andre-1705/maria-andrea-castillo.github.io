@@ -7,10 +7,25 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/components/ui/use-toast"
-import type { Database } from "@/lib/supabase"
 
-type Job = Database['public']['Tables']['jobs']['Row']
-type JobInsert = Database['public']['Tables']['jobs']['Insert']
+type Job = {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  video: string;
+  link: string;
+  category: string;
+}
+
+type JobInsert = {
+  title: string;
+  description: string;
+  image: string;
+  video: string;
+  link: string;
+  category: string;
+}
 
 export function JobAdminPanel() {
   const [jobs, setJobs] = useState<Job[]>([])
@@ -45,7 +60,7 @@ export function JobAdminPanel() {
       const data = await fetch('/api/jobs').then(res => res.json())
       // Adaptar si la respuesta es un objeto por categorías
       const allJobs = Object.values(data).flat()
-      setJobs(allJobs)
+      setJobs(allJobs as Job[])
     } catch (error) {
       toast({
         title: "Error",

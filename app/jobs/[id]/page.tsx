@@ -4,12 +4,19 @@ import { useState, useEffect } from "react"
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import type { Database } from "@/lib/supabase"
 import { useToast } from "@/components/ui/use-toast"
 
-type Job = Database['public']['Tables']['jobs']['Row']
+type Job = {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  image: string;
+  video: string;
+  // Add other properties if needed, but for now, match the structure of the fetched data
+}
 
-export default async function JobPage({ params }) {
+export default async function JobPage({ params }: { params: { id: string } }) {
   // Obtener datos del trabajo por ID usando fetch
   const res = await fetch(`/api/jobs/${params.id}`)
   const jobData = await res.json()
