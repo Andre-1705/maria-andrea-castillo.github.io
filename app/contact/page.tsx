@@ -57,16 +57,18 @@ export default function ContactPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-        name: values.name,
-        email: values.email,
-        phone: values.phone,
+          name: values.name,
+          email: values.email,
+          phone: values.phone,
           company: values.company,
-        message: values.message,
+          message: values.message,
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorText = await response.text();
+        const errorText = data.error || await response.text();
         console.error('Error al enviar el formulario:', errorText);
         toast({
           title: "Error al enviar mensaje",
@@ -78,11 +80,10 @@ export default function ContactPage() {
       }
 
       setContactCount((prev) => prev + 1)
-      setSuccess(true)
 
       toast({
         title: "Mensaje enviado",
-        description: "Gracias por contactarme. Te responderé a la brevedad.",
+        description: data.message || "Gracias por contactarme. Te responderé a la brevedad.",
       })
 
       form.reset()
