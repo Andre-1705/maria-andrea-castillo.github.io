@@ -3,6 +3,8 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { JobCarousel } from "@/components/job-carousel"
 
+export const dynamic = "force-dynamic";
+
 export default async function JobsPage() {
   // Obtener trabajos agrupados por categoría usando fetch con URL absoluta
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
