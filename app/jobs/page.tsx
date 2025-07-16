@@ -4,10 +4,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { JobCarousel } from "@/components/job-carousel"
 
 export default async function JobsPage() {
-  // Obtener trabajos agrupados por categoría usando fetch
-  const res = await fetch('/api/jobs')
-  const jobsByCategory = await res.json()
-  const categoriesData = Object.keys(jobsByCategory)
+  // Obtener trabajos agrupados por categoría usando fetch con URL absoluta
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const res = await fetch(`${baseUrl}/api/jobs`);
+  const jobsByCategory = await res.json();
+  const categoriesData = Object.keys(jobsByCategory);
   const customOrder = [
     "Desarrollo Web",
     "Comunicación Digital",
@@ -15,7 +16,7 @@ export default async function JobsPage() {
     "Producción Audiovisual",
     // "Otros" // Oculto temporalmente
   ];
-  const orderedCategories = customOrder.filter(cat => categoriesData.includes(cat))
+  const orderedCategories = customOrder.filter(cat => categoriesData.includes(cat));
 
   return (
     <div className="container py-12">

@@ -3,12 +3,13 @@ import { AdminDashboardClient } from "./dashboard-client"
 export const dynamic = "force-dynamic"
 
 export default async function AdminDashboardPage() {
-  // Obtener datos en el servidor usando fetch
-  const jobsRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/jobs`)
-  const jobsByCategory = await jobsRes.json()
-  const categoriesData = Object.keys(jobsByCategory)
-  const clientsStatsRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/clients/stats`)
-  const clientsStats = await clientsStatsRes.json()
+  // Obtener datos en el servidor usando fetch con URL absoluta
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const jobsRes = await fetch(`${baseUrl}/api/jobs`);
+  const jobsByCategory = await jobsRes.json();
+  const categoriesData = Object.keys(jobsByCategory);
+  const clientsStatsRes = await fetch(`${baseUrl}/api/clients/stats`);
+  const clientsStats = await clientsStatsRes.json();
   const customOrder = [
     "Desarrollo Web",
     "Comunicación Digital",
