@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/components/ui/use-toast"
-import { JobsService } from "@/lib/jobs-service"
 import type { Database } from "@/lib/supabase"
 
 type Job = Database['public']['Tables']['jobs']['Row']
@@ -43,8 +42,10 @@ export function JobAdminPanel() {
   async function loadJobs() {
     try {
       setLoading(true)
-      const data = await JobsService.getAllJobs()
-      setJobs(data)
+      const data = await fetch('/api/jobs').then(res => res.json())
+      // Adaptar si la respuesta es un objeto por categorías
+      const allJobs = Object.values(data).flat()
+      setJobs(allJobs)
     } catch (error) {
       toast({
         title: "Error",
@@ -61,38 +62,27 @@ export function JobAdminPanel() {
     
     try {
       if (editingJob) {
-        await JobsService.updateJob(editingJob.id, formData)
-        toast({
-          title: "Éxito",
-          description: "Trabajo actualizado correctamente"
+        // Actualizar trabajo (puedes crear un endpoint /api/jobs/[id] si lo necesitas)
+        await fetch(`/api/jobs/${editingJob.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
         })
+        toast({ title: "Éxito", description: "Trabajo actualizado correctamente" })
       } else {
-        await JobsService.createJob({
-          ...formData,
-          id: Date.now().toString() // ID temporal
+        await fetch('/api/jobs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...formData, id: Date.now().toString() })
         })
-        toast({
-          title: "Éxito", 
-          description: "Trabajo creado correctamente"
-        })
+        toast({ title: "Éxito", description: "Trabajo creado correctamente" })
       }
       
       setEditingJob(null)
-      setFormData({
-        title: "",
-        description: "",
-        image: "",
-        video: "",
-        link: "",
-        category: ""
-      })
+      setFormData({ title: "", description: "", image: "", video: "", link: "", category: "" })
       loadJobs()
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo guardar el trabajo",
-        variant: "destructive"
-      })
+      toast({ title: "Error", description: "No se pudo guardar el trabajo", variant: "destructive" })
     }
   }
 
@@ -112,18 +102,13 @@ export function JobAdminPanel() {
     if (!confirm("¿Estás seguro de que quieres eliminar este trabajo?")) return
     
     try {
-      await JobsService.deleteJob(id)
-      toast({
-        title: "Éxito",
-        description: "Trabajo eliminado correctamente"
+      await fetch(`/api/jobs/${id}`, {
+        method: 'DELETE'
       })
+      toast({ title: "Éxito", description: "Trabajo eliminado correctamente" })
       loadJobs()
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar el trabajo",
-        variant: "destructive"
-      })
+      toast({ title: "Error", description: "No se pudo eliminar el trabajo", variant: "destructive" })
     }
   }
 
