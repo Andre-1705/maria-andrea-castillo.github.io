@@ -6,10 +6,20 @@ import { JobCarousel } from "@/components/job-carousel"
 export const dynamic = "force-dynamic";
 
 export default async function JobsPage() {
-  // Obtener trabajos agrupados por categoría usando fetch con URL absoluta
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-  const res = await fetch(`${baseUrl}/api/jobs`);
-  const jobsByCategory = await res.json();
+  // Usar la URL absoluta correcta según el entorno
+  const baseUrl = process.env.NODE_ENV === 'production'
+    ? 'https://maria-andrea-castillo-github-io.vercel.app'
+    : 'http://localhost:3000';
+  const res = await fetch(`${baseUrl}/api/jobs`, { cache: 'no-store' });
+  const jobs = await res.json();
+
+  // Agrupar trabajos por categoría en el frontend
+  const jobsByCategory: Record<string, any[]> = {};
+  for (const job of jobs) {
+    if (!job.category) continue;
+    if (!jobsByCategory[job.category]) jobsByCategory[job.category] = [];
+    jobsByCategory[job.category].push(job);
+  }
   const categoriesData = Object.keys(jobsByCategory);
   const customOrder = [
     "Desarrollo Web",

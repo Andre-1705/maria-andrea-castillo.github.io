@@ -50,6 +50,8 @@ export default function ContactPage() {
     setIsSubmitting(true)
 
     try {
+      console.log('📤 Enviando formulario con datos:', values)
+      
       // Enviar datos al endpoint local de Next.js
       const response = await fetch('/api/contact', {
         method: 'POST',
@@ -65,11 +67,14 @@ export default function ContactPage() {
         }),
       });
 
+      console.log('📥 Respuesta del servidor:', response.status, response.statusText)
+      
       const data = await response.json();
+      console.log('📄 Datos de respuesta:', data)
 
       if (!response.ok) {
-        const errorText = data.error || await response.text();
-        console.error('Error al enviar el formulario:', errorText);
+        const errorText = data.error || data.details || await response.text();
+        console.error('❌ Error al enviar el formulario:', errorText);
         toast({
           title: "Error al enviar mensaje",
           description: errorText || "Hubo un problema al enviar tu mensaje. Por favor, intenta de nuevo.",
@@ -88,7 +93,7 @@ export default function ContactPage() {
 
       form.reset()
     } catch (error) {
-      console.error('Error inesperado:', error)
+      console.error('💥 Error inesperado:', error)
       toast({
         title: "Error al enviar mensaje",
         description: "Hubo un problema al enviar tu mensaje. Por favor, intenta de nuevo.",
