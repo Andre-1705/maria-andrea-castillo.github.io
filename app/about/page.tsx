@@ -17,8 +17,8 @@ export default function AboutPage() {
           </div>
         </div>
 
-        <div className="space-y-6 text-left -ml-36 mr-0 text-justify">
-          <h2 className="text-2xl font-semibold bg-gradient-to-r from-red-500 via-orange-500 via-yellow-500 to-lime-400 bg-clip-text text-transparent ml-72 mb-8" style={{ fontFamily: 'Dancing Script, cursive' }}>
+        <div className="space-y-6 -ml-36 mr-0 text-justify">
+          <h2 className="text-2xl font-semibold bg-gradient-to-r from-red-500 via-yellow-500 to-lime-400 bg-clip-text text-transparent ml-72 mb-8 font-dancing">
             María Andrea Castillo
           </h2>
 

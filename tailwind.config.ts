@@ -1,7 +1,8 @@
 import type { Config } from "tailwindcss"
 
 const config: Config = {
-  darkMode: ["class"],
+  // Use string 'class' to satisfy the Tailwind TypeScript type (or use ['class', '<selector>'])
+  darkMode: "class",
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -17,6 +18,9 @@ const config: Config = {
       },
     },
     extend: {
+      fontFamily: {
+        dancing: ['Dancing Script', 'cursive'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

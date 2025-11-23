@@ -54,10 +54,11 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 }
 
@@ -86,6 +87,7 @@
   }
 }
 
+
 .gradient-text {
   background: linear-gradient(to right, #ff7e5f, #feb47b, #ffcb80, #7ee8fa, #80d0c7);
   -webkit-background-clip: text;
@@ -108,9 +110,13 @@
 }
 
 .carousel-container {
-  scrollbar-width: none;
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+  overflow: -moz-scrollbars-none; /* Old Firefox */
 }
 
 .carousel-container::-webkit-scrollbar {
-  display: none;
+  display: none; /* Chrome, Safari and Opera */
+  width: 0 !important; /* Fallback for older browsers */
 }
+
