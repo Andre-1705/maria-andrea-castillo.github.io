@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import emailjs from "emailjs-com"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -50,45 +51,32 @@ export default function ContactPage() {
     setIsSubmitting(true)
 
     try {
-      console.log('📤 Enviando formulario con datos:', values)
-      
-      // Enviar datos al endpoint local de Next.js
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: values.name,
-          email: values.email,
-          phone: values.phone,
-          company: values.company,
-          message: values.message,
-        }),
-      });
+      console.log('📤 Enviando formulario con datos (EmailJS):', values)
 
-      console.log('📥 Respuesta del servidor:', response.status, response.statusText)
-      
-      const data = await response.json();
-      console.log('📄 Datos de respuesta:', data)
+      const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID
+      const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID
+      const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY
 
-      if (!response.ok) {
-        const errorText = data.error || data.details || await response.text();
-        console.error('❌ Error al enviar el formulario:', errorText);
-        toast({
-          title: "Error al enviar mensaje",
-          description: errorText || "Hubo un problema al enviar tu mensaje. Por favor, intenta de nuevo.",
-          variant: "destructive"
-        })
-        setIsSubmitting(false)
-        return;
+      if (!serviceId || !templateId || !publicKey) {
+        throw new Error("Faltan variables de entorno de EmailJS: NEXT_PUBLIC_EMAILJS_SERVICE_ID/TEMPLATE_ID/PUBLIC_KEY")
       }
+
+      const templateParams = {
+        from_name: values.name,
+        reply_to: values.email,
+        phone: values.phone,
+        company: values.company || "",
+        message: values.message,
+      }
+
+      const result = await emailjs.send(serviceId, templateId, templateParams, publicKey)
+      console.log("✅ EmailJS enviado:", result.status, result.text)
 
       setContactCount((prev) => prev + 1)
 
       toast({
         title: "Mensaje enviado",
-        description: data.message || "Gracias por contactarme. Te responderé a la brevedad.",
+        description: "Gracias por contactarme. Te responderé a la brevedad.",
       })
 
       form.reset()
@@ -96,7 +84,7 @@ export default function ContactPage() {
       console.error('💥 Error inesperado:', error)
       toast({
         title: "Error al enviar mensaje",
-        description: "Hubo un problema al enviar tu mensaje. Por favor, intenta de nuevo.",
+        description: typeof error === 'object' && error && 'message' in error ? (error as any).message : "Hubo un problema al enviar tu mensaje. Por favor, intenta de nuevo.",
         variant: "destructive"
       })
     } finally {
