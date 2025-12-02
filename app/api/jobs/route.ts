@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { JobsService } from "@/lib/jobs-service"
+import jobsData from "@/app/jobs/jobs-data"
 
 export async function GET(req: NextRequest) {
-  // Obtener todos los trabajos
-  const jobs = await JobsService.getAllJobs()
-  return NextResponse.json(jobs)
+  try {
+    // Intentar obtener trabajos de la base de datos
+    const jobs = await JobsService.getAllJobs()
+    return NextResponse.json(jobs)
+  } catch (error) {
+    // Si falla, devolver los datos del archivo JSON
+    console.log("Usando datos del archivo JSON como fallback")
+    return NextResponse.json(jobsData)
+  }
 }
 
 export async function POST(req: NextRequest) {

@@ -2,16 +2,24 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { JobCarousel } from "@/components/job-carousel"
+import jobsData from "./jobs-data"
 
 export const dynamic = "force-dynamic";
 
 export default async function JobsPage() {
-  // Usar la URL absoluta correcta según el entorno
-  const baseUrl = process.env.NODE_ENV === 'production'
-    ? 'https://maria-andrea-castillo-github-io.vercel.app'
-    : 'http://localhost:3000';
-  const res = await fetch(`${baseUrl}/api/jobs`, { cache: 'no-store' });
-  const jobs = await res.json();
+  // Intentar traer de la API (Supabase). Si falla, usar JSON local
+  let jobs = jobsData
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || ''}/api/jobs`, { cache: 'no-store' })
+    if (res.ok) {
+      const data = await res.json().catch(() => null)
+      if (Array.isArray(data) && data.length > 0) {
+        jobs = data
+      }
+    }
+  } catch {
+    // fallback silencioso
+  }
 
   // Agrupar trabajos por categoría en el frontend
   const jobsByCategory: Record<string, any[]> = {};

@@ -208,4 +208,18 @@ export const INITIAL_JOBS: Record<JobCategory, Job[]> = {
       link: "/jobs/22",
     },
   ],
-}; 
+};
+
+// Convertir INITIAL_JOBS a un array plano para usar con la API
+const jobsArray = [
+  ...INITIAL_JOBS["Desarrollo Web"].map(job => ({ ...job, category: "Desarrollo Web" as JobCategory })),
+  ...INITIAL_JOBS["Comunicación Digital"].map(job => ({ ...job, category: "Comunicación Digital" as JobCategory })),
+  ...INITIAL_JOBS["Consultoría IT"].map(job => ({ ...job, category: "Consultoría IT" as JobCategory })),
+  ...INITIAL_JOBS["Marketing Digital"].map(job => ({ ...job, category: "Marketing Digital" as JobCategory })),
+  ...INITIAL_JOBS["Producción Audiovisual"].map(job => ({ ...job, category: "Producción Audiovisual" as JobCategory })),
+  ...INITIAL_JOBS["Eventos"].map(job => ({ ...job, category: "Eventos" as JobCategory })),
+];
+
+export default jobsArray;
+
+ 

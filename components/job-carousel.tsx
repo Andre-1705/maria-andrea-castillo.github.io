@@ -85,9 +85,9 @@ export function JobCarousel({ title, jobs, isAdmin = false, onDelete }: JobCarou
         {jobs.map((job) => (
           <Card
             key={job.id}
-            className="min-w-[300px] max-w-[300px] snap-start bg-black/50 border-white/10 hover:border-white/30 transition-all"
+            className="min-w-[300px] max-w-[300px] snap-start bg-card border hover:border-primary/50 transition-all"
           >
-            <Link href={job.link}>
+            <Link href={`/jobs/${job.id}`}>
               <div className={`relative ${job.image && job.image.includes('ucaocos_pampeanos') ? 'h-32' : 'h-40'} w-full overflow-hidden rounded-t-lg flex justify-center items-center`}>
                 {job.video ? (
                   <div className="flex justify-center items-center h-full w-full">
@@ -97,6 +97,8 @@ export function JobCarousel({ title, jobs, isAdmin = false, onDelete }: JobCarou
                       loop
                       muted
                       playsInline
+                      controls
+                      preload="metadata"
                       style={{
                         display: 'block',
                         margin: 'auto',
@@ -139,13 +141,8 @@ export function JobCarousel({ title, jobs, isAdmin = false, onDelete }: JobCarou
               </div>
               <CardContent className="p-4">
                 <h3 className="font-semibold text-lg mb-2">{job.title}</h3>
-                <p className="text-sm text-white/70 line-clamp-3">{job.description}</p>
+                <p className="text-sm text-muted-foreground line-clamp-3">{job.description}</p>
               </CardContent>
-              <CardFooter className="p-4 pt-0">
-                <Button variant="link" className="p-0 h-auto">
-                  Ver más
-                </Button>
-              </CardFooter>
             </Link>
           </Card>
         ))}
