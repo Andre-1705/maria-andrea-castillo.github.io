@@ -62,11 +62,14 @@ export default function ContactPage() {
       }
 
       const templateParams = {
+        to_name: "Amigos y colegas",
         from_name: values.name,
         reply_to: values.email,
         phone: values.phone,
         company: values.company || "",
         message: values.message,
+        site_url: typeof window !== 'undefined' ? window.location.origin : 'https://maria-andrea-castillo.github.io',
+        year: new Date().getFullYear().toString(),
       }
 
       const result = await emailjs.send(serviceId, templateId, templateParams, publicKey)
