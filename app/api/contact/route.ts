@@ -4,6 +4,7 @@ import { getDatabaseConfig } from '@/lib/database/config'
 
 export async function POST(req: NextRequest) {
   console.log('🔍 Endpoint de contacto llamado')
+  console.log('🌍 NODE_ENV:', process.env.NODE_ENV)
   
   try {
     const data = await req.json()
@@ -16,7 +17,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Faltan campos obligatorios.' }, { status: 400 })
     }
 
-    console.log('🔧 Configuración de base de datos:', getDatabaseConfig().type)
+    const dbConfig = getDatabaseConfig()
+    console.log('🔧 Configuración de base de datos:', dbConfig.type)
+    console.log('📋 Supabase URL presente:', !!process.env.NEXT_PUBLIC_SUPABASE_URL)
+    console.log('📋 Supabase Key presente:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    console.log('📋 DATABASE_TYPE:', process.env.DATABASE_TYPE)
 
     // Guardar en la base de datos
     console.log('💾 Intentando guardar en la base de datos...')
@@ -34,11 +39,10 @@ export async function POST(req: NextRequest) {
     console.log('✅ Datos guardados exitosamente:', result)
 
     // Detectar motor de base de datos
-    const dbType = getDatabaseConfig().type
     let messageDb = ''
-    if (dbType === 'supabase') {
+    if (dbConfig.type === 'supabase') {
       messageDb = '¡Inserción exitosa en Supabase!'
-    } else if (dbType === 'postgresql') {
+    } else if (dbConfig.type === 'postgresql') {
       messageDb = '¡Inserción exitosa en PostgreSQL!'
     } else {
       messageDb = '¡Inserción exitosa!'
@@ -56,7 +60,8 @@ export async function POST(req: NextRequest) {
     
     return NextResponse.json({ 
       error: errorDetails,
-      details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+      details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
+      dbType: process.env.DATABASE_TYPE
     }, { status: 500 })
   }
 } 
