@@ -10,11 +10,16 @@ export async function POST(req: NextRequest) {
     const data = await req.json()
     console.log('📝 Datos recibidos:', JSON.stringify(data))
     
-    const { name, email, phone, company, message } = data
+    const { name, email, phone, company, message, recaptchaToken } = data
 
     if (!name || !email || !phone || !message) {
       console.log('❌ Faltan campos obligatorios')
       return NextResponse.json({ error: 'Faltan campos obligatorios.' }, { status: 400 })
+    }
+
+    // Log del token de reCAPTCHA si está presente
+    if (recaptchaToken) {
+      console.log('🔐 Token de reCAPTCHA recibido:', recaptchaToken.substring(0, 20) + '...')
     }
 
     const dbConfig = getDatabaseConfig()
