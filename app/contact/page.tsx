@@ -4,6 +4,7 @@ import { useState } from "react"
 import emailjs from "emailjs-com"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3"
 import * as z from "zod"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -32,6 +33,7 @@ const formSchema = z.object({
 
 export default function ContactPage() {
   const { toast } = useToast()
+  const { executeRecaptcha } = useGoogleReCaptcha()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [contactCount, setContactCount] = useState(0)
   const [success, setSuccess] = useState(false)
@@ -53,6 +55,19 @@ export default function ContactPage() {
     try {
       console.log('📤 Enviando formulario con datos:', values)
 
+      // 0. Ejecutar reCAPTCHA
+      console.log('🔐 Paso 0: Validando con reCAPTCHA...')
+      let recaptchaToken = ''
+      try {
+        if (executeRecaptcha) {
+          recaptchaToken = await executeRecaptcha('contact_form')
+          console.log('✅ reCAPTCHA token obtenido')
+        }
+      } catch (error) {
+        console.warn('⚠️ Error con reCAPTCHA:', error)
+        // Continuamos sin token si falla
+      }
+
       // 1. Guardar en Supabase a través del endpoint
       console.log('💾 Paso 1: Guardando en Supabase...')
       const dbResponse = await fetch('/api/contact', {
@@ -60,7 +75,10 @@ export default function ContactPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          ...values,
+          recaptchaToken,
+        }),
       })
 
       if (!dbResponse.ok) {
