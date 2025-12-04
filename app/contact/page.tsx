@@ -51,29 +51,50 @@ export default function ContactPage() {
     setIsSubmitting(true)
 
     try {
-      console.log('📤 Enviando formulario con datos (EmailJS):', values)
+      console.log('📤 Enviando formulario con datos:', values)
 
+      // 1. Guardar en Supabase a través del endpoint
+      console.log('💾 Paso 1: Guardando en Supabase...')
+      const dbResponse = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(values),
+      })
+
+      if (!dbResponse.ok) {
+        const errorData = await dbResponse.json()
+        throw new Error(`Error al guardar en BD: ${errorData.error || 'Error desconocido'}`)
+      }
+
+      const dbData = await dbResponse.json()
+      console.log("✅ Guardado en Supabase:", dbData)
+
+      // 2. Enviar email por EmailJS
+      console.log('📧 Paso 2: Enviando email por EmailJS...')
       const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID
       const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID
       const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY
 
       if (!serviceId || !templateId || !publicKey) {
-        throw new Error("Faltan variables de entorno de EmailJS: NEXT_PUBLIC_EMAILJS_SERVICE_ID/TEMPLATE_ID/PUBLIC_KEY")
-      }
+        console.warn("⚠️ Advertencia: Faltan variables de entorno de EmailJS, pero el formulario fue guardado en la BD")
+        // No lanzamos error aquí porque el guardado en BD fue exitoso
+      } else {
+        const templateParams = {
+          to_name: "Amigos y colegas",
+          from_name: values.name,
+          reply_to: values.email,
+          phone: values.phone,
+          company: values.company || "",
+          message: values.message,
+          site_url: typeof window !== 'undefined' ? window.location.origin : 'https://maria-andrea-castillo.github.io',
+          year: new Date().getFullYear().toString(),
+        }
 
-      const templateParams = {
-        to_name: "Amigos y colegas",
-        from_name: values.name,
-        reply_to: values.email,
-        phone: values.phone,
-        company: values.company || "",
-        message: values.message,
-        site_url: typeof window !== 'undefined' ? window.location.origin : 'https://maria-andrea-castillo.github.io',
-        year: new Date().getFullYear().toString(),
+        const result = await emailjs.send(serviceId, templateId, templateParams, publicKey)
+        console.log("✅ Email enviado por EmailJS:", result.status, result.text)
       }
-
-      const result = await emailjs.send(serviceId, templateId, templateParams, publicKey)
-      console.log("✅ EmailJS enviado:", result.status, result.text)
 
       setContactCount((prev) => prev + 1)
 
@@ -84,7 +105,7 @@ export default function ContactPage() {
 
       form.reset()
     } catch (error) {
-      console.error('💥 Error inesperado:', error)
+      console.error('💥 Error:', error)
       toast({
         title: "Error al enviar mensaje",
         description: typeof error === 'object' && error && 'message' in error ? (error as any).message : "Hubo un problema al enviar tu mensaje. Por favor, intenta de nuevo.",
