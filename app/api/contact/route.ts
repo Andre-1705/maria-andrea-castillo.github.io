@@ -59,14 +59,19 @@ export async function POST(req: NextRequest) {
     console.error('💥 Error en el endpoint de contacto:', error)
     console.error('💥 Stack trace:', error instanceof Error ? error.stack : 'No stack trace available')
     
-    // Devolver más detalles del error en desarrollo
+    // Devolver detalles del error (temporalmente en producción para debug)
     const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
-    const errorDetails = process.env.NODE_ENV === 'development' ? errorMessage : 'Error interno del servidor.'
+    const errorStack = error instanceof Error ? error.stack : 'No stack'
     
     return NextResponse.json({ 
-      error: errorDetails,
-      details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
-      dbType: process.env.DATABASE_TYPE
+      error: errorMessage,
+      stack: errorStack,
+      dbType: process.env.DATABASE_TYPE,
+      env: {
+        hasDatabaseType: !!process.env.DATABASE_TYPE,
+        hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+        hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      }
     }, { status: 500 })
   }
 } 
