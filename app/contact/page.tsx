@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Mail, Phone, MapPin, Instagram, Linkedin, Facebook } from "lucide-react"
+import { Mail, Phone, MapPin, Instagram, Linkedin, Facebook, CheckCircle } from "lucide-react"
 import { VisitorCounter } from "@/components/visitor-counter"
 
 const formSchema = z.object({
@@ -115,13 +115,17 @@ export default function ContactPage() {
       }
 
       setContactCount((prev) => prev + 1)
+      setSuccess(true)
 
       toast({
-        title: "Mensaje enviado",
+        title: "✅ ¡Mensaje enviado con éxito!",
         description: "Gracias por contactarme. Te responderé a la brevedad.",
       })
 
       form.reset()
+      
+      // Ocultar mensaje de éxito después de 5 segundos
+      setTimeout(() => setSuccess(false), 5000)
     } catch (error) {
       console.error('💥 Error:', error)
       toast({
@@ -155,6 +159,14 @@ export default function ContactPage() {
             </div>
           </CardHeader>
           <CardContent>
+            {success && (
+              <div className="mb-6 p-4 bg-green-500/20 border border-green-500/50 rounded-lg">
+                <p className="text-green-500 font-semibold flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5" />
+                  ¡Mensaje enviado con éxito! Te responderé pronto.
+                </p>
+              </div>
+            )}
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField

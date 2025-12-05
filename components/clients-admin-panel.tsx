@@ -202,7 +202,7 @@ export function ClientsAdminPanel() {
                   {clients
                     .filter(client => status === 'all' || client.status === status)
                     .map((client) => {
-                      const statusInfo = statusConfig[client.status]
+                      const statusInfo = statusConfig[client.status] || statusConfig.pending
                       const StatusIcon = statusInfo.icon
 
                       return (
