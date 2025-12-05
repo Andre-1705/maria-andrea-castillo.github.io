@@ -7,28 +7,41 @@ import jobsData from "./jobs-data"
 export const dynamic = "force-dynamic";
 
 export default async function JobsPage() {
-  // Intentar traer de la API (Supabase). Si falla, usar JSON local
-  let jobs = jobsData
+  // Intentar traer de la API (Supabase + uploads). Si falla, usar JSON local
+  let jobsByCategory: Record<string, any[]> = {}
+  
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || ''}/api/jobs`, { cache: 'no-store' })
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/jobs`, { 
+      cache: 'no-store',
+      next: { revalidate: 0 }
+    })
     if (res.ok) {
-      const data = await res.json().catch(() => null)
-      if (Array.isArray(data) && data.length > 0) {
-        jobs = data
+      const data = await res.json()
+      console.log('📦 Datos recibidos en /jobs:', data)
+      
+      // Si data es un objeto con categorías, usarlo directamente
+      if (typeof data === 'object' && !Array.isArray(data)) {
+        jobsByCategory = data
+      } else if (Array.isArray(data)) {
+        // Si es array, agrupar por categoría
+        for (const job of data) {
+          if (!job.category) continue
+          if (!jobsByCategory[job.category]) jobsByCategory[job.category] = []
+          jobsByCategory[job.category].push(job)
+        }
       }
     }
-  } catch {
-    // fallback silencioso
+  } catch (error) {
+    console.error('Error fetching jobs:', error)
+    // Usar fallback de jobsData
+    for (const job of jobsData) {
+      if (!job.category) continue
+      if (!jobsByCategory[job.category]) jobsByCategory[job.category] = []
+      jobsByCategory[job.category].push(job)
+    }
   }
 
-  // Agrupar trabajos por categoría en el frontend
-  const jobsByCategory: Record<string, any[]> = {};
-  for (const job of jobs) {
-    if (!job.category) continue;
-    if (!jobsByCategory[job.category]) jobsByCategory[job.category] = [];
-    jobsByCategory[job.category].push(job);
-  }
-  const categoriesData = Object.keys(jobsByCategory);
+  const categoriesData = Object.keys(jobsByCategory)
   const customOrder = [
     "Desarrollo Web",
     "Comunicación Digital",
