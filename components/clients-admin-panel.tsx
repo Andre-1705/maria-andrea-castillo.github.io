@@ -177,8 +177,6 @@ export function ClientsAdminPanel() {
           </CardContent>
         </Card>
       </div>
-        </Card>
-      </div>
 
       {/* Lista de clientes */}
       <Card>
