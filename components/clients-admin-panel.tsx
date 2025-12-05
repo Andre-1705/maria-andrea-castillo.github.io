@@ -246,47 +246,56 @@ export function ClientsAdminPanel() {
                               </div>
                             </div>
 
-                            <div className="flex gap-2">
-                              {client.status === 'pending' && (
-                                <>
-                                  <Button
-                                    size="sm"
-                                    onClick={() => updateClientStatus(client.id, 'contacted')}
-                                  >
-                                    Marcar como contactado
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => updateClientStatus(client.id, 'rejected')}
-                                  >
-                                    Rechazar
-                                  </Button>
-                                </>
+                            <div className="flex gap-2 flex-wrap">
+                              {/* Botones para cambiar estado */}
+                              {client.status !== 'pending' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => updateClientStatus(client.id, 'pending')}
+                                  className="bg-yellow-500/10 hover:bg-yellow-500/20 border-yellow-500/50"
+                                >
+                                  → Pendiente
+                                </Button>
                               )}
-                              {client.status === 'contacted' && (
-                                <>
-                                  <Button
-                                    size="sm"
-                                    onClick={() => updateClientStatus(client.id, 'completed')}
-                                  >
-                                    Marcar como completado
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => updateClientStatus(client.id, 'rejected')}
-                                  >
-                                    Rechazar
-                                  </Button>
-                                </>
+                              {client.status !== 'contacted' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => updateClientStatus(client.id, 'contacted')}
+                                  className="bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/50"
+                                >
+                                  → Contactado
+                                </Button>
                               )}
+                              {client.status !== 'completed' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => updateClientStatus(client.id, 'completed')}
+                                  className="bg-green-500/10 hover:bg-green-500/20 border-green-500/50"
+                                >
+                                  → Completado
+                                </Button>
+                              )}
+                              {client.status !== 'rejected' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => updateClientStatus(client.id, 'rejected')}
+                                  className="bg-red-500/10 hover:bg-red-500/20 border-red-500/50"
+                                >
+                                  → Rechazado
+                                </Button>
+                              )}
+                              
+                              {/* Botón eliminar */}
                               <Button
                                 size="sm"
                                 variant="destructive"
                                 onClick={() => deleteClient(client.id)}
                               >
-                                Eliminar
+                                🗑️ Eliminar
                               </Button>
                             </div>
                           </CardContent>
