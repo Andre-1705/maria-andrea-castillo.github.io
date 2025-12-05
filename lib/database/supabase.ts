@@ -180,8 +180,15 @@ export class SupabaseClientsService implements IClientsService {
 
   // Crear un nuevo contacto
   async createClient(client: ContactSubmissionInsert): Promise<ContactSubmission> {
-    const { name, email, phone, company, message } = client;
-    const insertObj: any = { name, email, phone, company, message };
+    const { name, email, phone, company, message, status } = client;
+    const insertObj: any = { 
+      name, 
+      email, 
+      phone, 
+      company, 
+      message,
+      status: status || 'pending' // Default a 'pending' si no se especifica
+    };
     const { data, error } = await getSupabase()
       .from('contact_submissions')
       .insert(insertObj)
