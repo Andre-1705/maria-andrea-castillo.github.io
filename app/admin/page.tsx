@@ -34,34 +34,51 @@ export default function AdminLoginPage() {
     },
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true)
 
-    // Simulación de autenticación
-    // En una implementación real, esto se conectaría a una API de autenticación
-    setTimeout(() => {
-      setIsSubmitting(false)
+    try {
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: values.username,
+          password: values.password,
+        }),
+      })
 
-      // Credenciales de ejemplo (en una implementación real, esto se verificaría en el servidor)
-      if (values.username === "admin" && values.password === "password") {
+      const data = await response.json()
+
+      if (response.ok && data.success) {
         toast({
           title: "Inicio de sesión exitoso",
           description: "Bienvenido al panel de administración.",
         })
 
-        // Guardar estado de autenticación
-        localStorage.setItem("isAuthenticated", "true")
+        // Guardar token y email en sessionStorage (más seguro que localStorage)
+        if (data.token) {
+          sessionStorage.setItem("admin_token", data.token)
+        }
+        sessionStorage.setItem("admin_email", values.username)
 
         // Redirigir al panel de administración
         router.push("/admin/dashboard")
       } else {
         toast({
           title: "Error de autenticación",
-          description: "Credenciales incorrectas. Inténtalo de nuevo.",
+          description: data.error || "Credenciales incorrectas. Inténtalo de nuevo.",
           variant: "destructive",
         })
       }
-    }, 1500)
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Error al conectar con el servidor",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -86,9 +103,9 @@ export default function AdminLoginPage() {
                 name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Usuario</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="admin" {...field} />
+                      <Input type="email" placeholder="mariaandreacastilloarregui@gmail.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -112,12 +129,9 @@ export default function AdminLoginPage() {
               </Button>
 
               <div className="text-center text-sm text-muted-foreground mt-4">
-                <p>Para fines de demostración:</p>
+                <p>Usa tus credenciales de administrador:</p>
                 <p>
-                  Usuario: <strong>admin</strong>
-                </p>
-                <p>
-                  Contraseña: <strong>password</strong>
+                  Email: <strong>mariaandreacastilloarregui@gmail.com</strong>
                 </p>
               </div>
             </form>
