@@ -58,10 +58,28 @@ export function JobAdminPanel() {
     try {
       setLoading(true)
       const data = await fetch('/api/jobs').then(res => res.json())
+      console.log('📦 Datos recibidos de /api/jobs:', data)
+      
       // Adaptar si la respuesta es un objeto por categorías
-      const allJobs = Object.values(data).flat()
-      setJobs(allJobs as Job[])
+      const allJobs: Job[] = []
+      
+      if (typeof data === 'object' && data !== null) {
+        Object.entries(data).forEach(([category, items]) => {
+          if (Array.isArray(items)) {
+            items.forEach((job: any) => {
+              allJobs.push({
+                ...job,
+                category: category
+              })
+            })
+          }
+        })
+      }
+      
+      console.log('✅ Trabajos procesados:', allJobs)
+      setJobs(allJobs)
     } catch (error) {
+      console.error('❌ Error cargando trabajos:', error)
       toast({
         title: "Error",
         description: "No se pudieron cargar los trabajos",
