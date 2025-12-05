@@ -143,6 +143,16 @@ export default function ContactPage() {
           <CardHeader>
             <CardTitle>Envíame un mensaje</CardTitle>
             <CardDescription>Completa el formulario y me pondré en contacto contigo lo antes posible.</CardDescription>
+            <div className="mt-4 pt-4 border-t border-white/10 space-y-2 text-sm">
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Visitantes totales:</span>
+                <span className="text-lg font-bold text-primary"><VisitorCounter type="visitors" /></span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Contactos recibidos:</span>
+                <span className="text-lg font-bold text-primary">{contactCount}</span>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -271,22 +281,6 @@ export default function ContactPage() {
                     </a>
                   </Button>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-black/50 border-white/10">
-            <CardHeader>
-              <CardTitle>Estadísticas</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span>Visitantes totales:</span>
-                <VisitorCounter type="visitors" />
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Contactos recibidos:</span>
-                <span className="text-xl font-bold">{contactCount}</span>
               </div>
             </CardContent>
           </Card>

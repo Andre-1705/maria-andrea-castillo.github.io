@@ -30,6 +30,7 @@ const statusConfig = {
 export function ClientsAdminPanel() {
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
+  const [visitors, setVisitors] = useState(0)
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
@@ -46,12 +47,14 @@ export function ClientsAdminPanel() {
   async function loadClients() {
     try {
       setLoading(true)
-      const [clientsData, statsData] = await Promise.all([
+      const [clientsData, statsData, visitorsData] = await Promise.all([
         fetch('/api/clients').then(res => res.json()),
-        fetch('/api/clients/stats').then(res => res.json())
+        fetch('/api/clients/stats').then(res => res.json()),
+        fetch('/api/visitors?type=visitors').then(res => res.json())
       ])
       setClients(clientsData)
       setStats(statsData)
+      setVisitors(visitorsData.count || 0)
     } catch (error) {
       console.error('Error loading clients:', error)
       toast({
@@ -136,36 +139,44 @@ export function ClientsAdminPanel() {
   return (
     <div className="space-y-6">
       {/* Estadísticas */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card>
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+        <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <p className="text-xs text-muted-foreground">Total</p>
+            <div className="text-2xl font-bold text-blue-500">{visitors}</div>
+            <p className="text-xs text-muted-foreground">Visitantes</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-purple-500">{stats.total}</div>
+            <p className="text-xs text-muted-foreground">Contactos</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border-yellow-500/20">
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-yellow-500">{stats.pending}</div>
             <p className="text-xs text-muted-foreground">Pendientes</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-gradient-to-br from-blue-400/10 to-blue-500/5 border-blue-400/20">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-blue-500">{stats.contacted}</div>
+            <div className="text-2xl font-bold text-blue-400">{stats.contacted}</div>
             <p className="text-xs text-muted-foreground">Contactados</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-green-500">{stats.completed}</div>
             <p className="text-xs text-muted-foreground">Completados</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-gradient-to-br from-red-500/10 to-red-600/5 border-red-500/20">
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-red-500">{stats.rejected}</div>
             <p className="text-xs text-muted-foreground">Rechazados</p>
           </CardContent>
+        </Card>
+      </div>
         </Card>
       </div>
 
