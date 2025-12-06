@@ -5,43 +5,44 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function AdminDashboardPage() {
-  const [data, setData] = useState({ jobs: {}, categories: [], stats: {} })
+  const [data, setData] = useState({ jobs: {}, categories: [], stats: { totalJobs: 0, totalClients: 0, pendingClients: 0, visitorsCount: 0 } })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
+    console.log('🔐 AdminDashboardPage mounted, checking auth...')
+    
     // Verificar autenticación primero
-    const checkAuth = () => {
-      try {
-        const token = localStorage?.getItem('admin_token')
-        const email = localStorage?.getItem('admin_email')
-        if (token && email) {
-          setIsAuthenticated(true)
-        } else {
-          router.push('/admin')
-          return false
-        }
-      } catch {
-        // Si hay error al acceder a localStorage, permitir que continúe
-        setIsAuthenticated(true)
-      }
-      return true
+    const token = typeof window !== 'undefined' ? localStorage?.getItem('admin_token') : null
+    const email = typeof window !== 'undefined' ? localStorage?.getItem('admin_email') : null
+    
+    console.log('🔑 Token:', token ? 'exists' : 'missing')
+    console.log('📧 Email:', email ? 'exists' : 'missing')
+    
+    if (!token || !email) {
+      console.log('❌ No auth found, redirecting to /admin')
+      router.push('/admin')
+      return
     }
-
-    if (!checkAuth()) return
+    
+    setIsAuthenticated(true)
+    console.log('✅ Authenticated')
 
     const loadData = async () => {
       try {
         setLoading(true)
+        console.log('📡 Fetching jobs from /api/jobs')
         const jobsRes = await fetch('/api/jobs')
 
         if (!jobsRes.ok) {
+          console.error('❌ Jobs fetch failed:', jobsRes.status)
           throw new Error('Error cargando trabajos')
         }
 
         const jobsByCategory = await jobsRes.json()
+        console.log('✅ Jobs loaded:', Object.keys(jobsByCategory).length, 'categories')
         
         const customOrder = [
           "Desarrollo Web",
@@ -64,11 +65,12 @@ export default function AdminDashboardPage() {
           categories,
           stats,
         })
+        console.log('✅ Dashboard data ready')
       } catch (err: any) {
-        console.error('Error loading dashboard:', err)
+        console.error('❌ Error loading dashboard:', err)
         setError(err.message || 'Error cargando datos')
         // Usar datos vacíos como fallback
-        setData({ jobs: {}, categories: [], stats: {} })
+        setData({ jobs: {}, categories: [], stats: { totalJobs: 0, totalClients: 0, pendingClients: 0, visitorsCount: 0 } })
       } finally {
         setLoading(false)
       }
