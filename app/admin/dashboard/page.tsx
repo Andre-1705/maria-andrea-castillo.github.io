@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function AdminDashboardPage() {
+  const [mounted, setMounted] = useState(false)
   const [data, setData] = useState({ jobs: {}, categories: [], stats: { totalJobs: 0, totalClients: 0, pendingClients: 0, visitorsCount: 0 } })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -12,11 +13,18 @@ export default function AdminDashboardPage() {
   const router = useRouter()
 
   useEffect(() => {
+    // Solo ejecutar en el cliente
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+
     console.log('🔐 AdminDashboardPage mounted, checking auth...')
     
-    // Verificar autenticación primero
-    const token = typeof window !== 'undefined' ? localStorage?.getItem('admin_token') : null
-    const email = typeof window !== 'undefined' ? localStorage?.getItem('admin_email') : null
+    // Verificar autenticación
+    const token = localStorage?.getItem('admin_token')
+    const email = localStorage?.getItem('admin_email')
     
     console.log('🔑 Token:', token ? 'exists' : 'missing')
     console.log('📧 Email:', email ? 'exists' : 'missing')
@@ -77,7 +85,7 @@ export default function AdminDashboardPage() {
     }
 
     loadData()
-  }, [router])
+  }, [mounted, router])
 
   if (loading) {
     return (
