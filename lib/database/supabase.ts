@@ -3,16 +3,26 @@ import { createClient } from '@supabase/supabase-js'
 import { IJobsService, IClientsService, Job, JobInsert, JobUpdate, ContactSubmission, ContactSubmissionInsert, ContactSubmissionUpdate } from '../types/database'
 import { getDatabaseConfig } from './config'
 
-// Solo inicializa Supabase si el tipo es 'supabase'
+// Inicialización lazy de Supabase - solo cuando se necesita
 let supabase: ReturnType<typeof createClient> | null = null
-const config = getDatabaseConfig()
-if (config.type === 'supabase') {
-  const supabaseUrl = config.connectionString!
-  const supabaseAnonKey = config.options!.anonKey!
-  supabase = createClient(supabaseUrl, supabaseAnonKey)
+let initialized = false
+
+function initSupabase() {
+  if (initialized) return
+  initialized = true
+  
+  try {
+    const config = getDatabaseConfig()
+    if (config.type === 'supabase' && config.connectionString && config.options?.anonKey) {
+      supabase = createClient(config.connectionString, config.options.anonKey)
+    }
+  } catch (error) {
+    console.warn('Warning: Could not initialize Supabase:', error)
+  }
 }
 
 function getSupabase() {
+  initSupabase()
   if (!supabase) throw new Error('Supabase no está configurado. Verifica tu DATABASE_TYPE.')
   return supabase
 }
