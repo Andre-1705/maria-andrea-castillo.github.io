@@ -5,9 +5,6 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { JobCarousel } from "@/components/job-carousel"
-import { JobUploadForm } from "@/components/job-upload-form"
-import { ClientsAdminPanel } from "@/components/clients-admin-panel"
 import { useToast } from "@/components/ui/use-toast"
 import { LogOut, Plus, Users, Briefcase } from "lucide-react"
 
@@ -31,8 +28,14 @@ export function AdminDashboardClient({ jobs, categories, stats }: AdminDashboard
   const [loading, setLoading] = useState(false)
 
   const handleLogout = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem("isAuthenticated")
+    try {
+      if (typeof window !== 'undefined') {
+        sessionStorage?.removeItem("admin_token")
+        sessionStorage?.removeItem("admin_email")
+        localStorage?.removeItem("isAuthenticated")
+      }
+    } catch (e) {
+      console.warn("Error clearing storage:", e)
     }
     router.push("/admin")
   }
@@ -40,16 +43,19 @@ export function AdminDashboardClient({ jobs, categories, stats }: AdminDashboard
   const handleDeleteJob = async (id: string) => {
     try {
       setLoading(true)
-      await fetch(`/api/jobs/${id}`, { method: "DELETE" })
+      const res = await fetch(`/api/jobs/${id}`, { method: "DELETE" })
+      if (!res.ok) throw new Error("Failed to delete job")
+      
       // Recargar trabajos
-      const res = await fetch("/api/jobs")
-      const updatedJobs = await res.json()
+      const jobsRes = await fetch("/api/jobs")
+      const updatedJobs = await jobsRes.json()
       setJobsState(updatedJobs)
       toast({
         title: "Trabajo eliminado",
         description: "El trabajo ha sido eliminado correctamente.",
       })
     } catch (error) {
+      console.error("Delete error:", error)
       toast({
         title: "Error",
         description: "No se pudo eliminar el trabajo.",
@@ -60,38 +66,10 @@ export function AdminDashboardClient({ jobs, categories, stats }: AdminDashboard
     }
   }
 
-  const handleAddJob = async (newJob: any) => {
-    try {
-      setLoading(true)
-      await fetch("/api/jobs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...newJob,
-          category: selectedCategory,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-      })
-      // Recargar trabajos
-      const res = await fetch("/api/jobs")
-      const updatedJobs = await res.json()
-      setJobsState(updatedJobs)
-      setIsAddingJob(false)
-      toast({
-        title: "Trabajo añadido",
-        description: "El nuevo trabajo ha sido añadido correctamente.",
-      })
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo agregar el trabajo.",
-        variant: "destructive"
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
+  // Lazy load components to avoid errors
+  const JobCarousel = lazy(() => import("@/components/job-carousel").then(m => ({ default: m.JobCarousel })).catch(() => ({ default: () => <div className="text-muted-foreground">Error cargando carrusel</div> })))
+  const JobUploadForm = lazy(() => import("@/components/job-upload-form").then(m => ({ default: m.JobUploadForm })).catch(() => ({ default: () => <div className="text-muted-foreground">Error cargando formulario</div> })))
+  const ClientsAdminPanel = lazy(() => import("@/components/clients-admin-panel").then(m => ({ default: m.ClientsAdminPanel })).catch(() => ({ default: () => <div className="text-muted-foreground">Error cargando panel de clientes</div> })))
 
   return (
     <div className="container py-12">
@@ -110,7 +88,7 @@ export function AdminDashboardClient({ jobs, categories, stats }: AdminDashboard
             <div className="flex items-center gap-2">
               <Briefcase className="h-5 w-5 text-primary" />
               <div>
-                <div className="text-2xl font-bold">{stats.totalJobs}</div>
+                <div className="text-2xl font-bold">{stats?.totalJobs || 0}</div>
                 <p className="text-xs text-muted-foreground">Trabajos</p>
               </div>
             </div>
@@ -121,7 +99,7 @@ export function AdminDashboardClient({ jobs, categories, stats }: AdminDashboard
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
               <div>
-                <div className="text-2xl font-bold">{stats.totalClients}</div>
+                <div className="text-2xl font-bold">{stats?.totalClients || 0}</div>
                 <p className="text-xs text-muted-foreground">Clientes</p>
               </div>
             </div>
@@ -132,7 +110,7 @@ export function AdminDashboardClient({ jobs, categories, stats }: AdminDashboard
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-yellow-500" />
               <div>
-                <div className="text-2xl font-bold text-yellow-500">{stats.pendingClients}</div>
+                <div className="text-2xl font-bold text-yellow-500">{stats?.pendingClients || 0}</div>
                 <p className="text-xs text-muted-foreground">Pendientes</p>
               </div>
             </div>
@@ -143,7 +121,7 @@ export function AdminDashboardClient({ jobs, categories, stats }: AdminDashboard
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-blue-500" />
               <div>
-                <div className="text-2xl font-bold text-blue-500">{stats.visitorsCount}</div>
+                <div className="text-2xl font-bold text-blue-500">{stats?.visitorsCount || 0}</div>
                 <p className="text-xs text-muted-foreground">Visitantes</p>
               </div>
             </div>
@@ -159,13 +137,12 @@ export function AdminDashboardClient({ jobs, categories, stats }: AdminDashboard
           </TabsTrigger>
           <TabsTrigger value="clients" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
-            Gestión de Clientes
+            Clientes
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="jobs" className="mt-6">
-          <div className="space-y-6">
-            {/* Formulario para agregar trabajos */}
+          <div className="space-y-6 text-white">
             <Card>
               <CardHeader>
                 <div className="flex justify-between items-center">
@@ -186,39 +163,25 @@ export function AdminDashboardClient({ jobs, categories, stats }: AdminDashboard
               </CardHeader>
               {isAddingJob && (
                 <CardContent>
-                  <JobUploadForm
-                    categories={categories}
-                    selectedCategory={selectedCategory}
-                    onCategoryChange={setSelectedCategory}
-                    onSubmit={handleAddJob}
-                    onCancel={() => setIsAddingJob(false)}
-                  />
+                  <JobUploadForm categories={categories} selectedCategory={selectedCategory} />
                 </CardContent>
               )}
             </Card>
 
-            {/* Gestión de trabajos existentes */}
             {categories.length > 0 ? (
-              <Tabs defaultValue={categories[0]} className="w-full">
-                <TabsList className="flex justify-between mb-8">
-                  {categories.map((category) => (
-                    <TabsTrigger key={category} value={category} className="flex-1 mx-1 text-base font-medium min-w-0">
-                      {category}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-
+              <div className="space-y-4">
                 {categories.map((category) => (
-                  <TabsContent key={category} value={category} className="mt-4">
+                  <div key={category} className="space-y-2">
+                    <h3 className="text-lg font-semibold">{category}</h3>
                     <JobCarousel 
                       title={category} 
                       jobs={jobsState[category] || []} 
                       isAdmin={true}
                       onDelete={handleDeleteJob}
                     />
-                  </TabsContent>
+                  </div>
                 ))}
-              </Tabs>
+              </div>
             ) : (
               <div className="text-center py-12">
                 <p className="text-muted-foreground">No hay categorías disponibles.</p>
@@ -233,4 +196,6 @@ export function AdminDashboardClient({ jobs, categories, stats }: AdminDashboard
       </Tabs>
     </div>
   )
-} 
+}
+
+import { lazy } from 'react' 

@@ -2,13 +2,36 @@
 
 import { AdminDashboardClient } from './dashboard-client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function AdminDashboardPage() {
   const [data, setData] = useState({ jobs: {}, categories: [], stats: {} })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
+    // Verificar autenticación primero
+    const checkAuth = () => {
+      try {
+        const token = sessionStorage?.getItem('admin_token')
+        const email = sessionStorage?.getItem('admin_email')
+        if (token && email) {
+          setIsAuthenticated(true)
+        } else {
+          router.push('/admin')
+          return false
+        }
+      } catch {
+        // Si hay error al acceder a sessionStorage, permitir que continúe
+        setIsAuthenticated(true)
+      }
+      return true
+    }
+
+    if (!checkAuth()) return
+
     const loadData = async () => {
       try {
         setLoading(true)
@@ -48,7 +71,7 @@ export default function AdminDashboardPage() {
     }
 
     loadData()
-  }, [])
+  }, [router])
 
   if (loading) {
     return (
