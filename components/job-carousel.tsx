@@ -85,7 +85,7 @@ export function JobCarousel({ title, jobs, isAdmin = false, onDelete }: JobCarou
         {jobs.map((job) => (
           <Card
             key={job.id}
-            className="min-w-[300px] max-w-[300px] snap-start bg-card border hover:border-primary/50 transition-all"
+            className="min-w-[300px] max-w-[300px] snap-start bg-card border border-white/10 hover:border-primary/50 transition-all"
           >
             <Link href={`/jobs/${job.id}`}>
               <div className={`relative ${job.image && job.image.includes('ucaocos_pampeanos') ? 'h-32' : 'h-40'} w-full overflow-hidden rounded-t-lg flex justify-center items-center`}>

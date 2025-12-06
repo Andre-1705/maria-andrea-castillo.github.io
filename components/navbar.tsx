@@ -35,7 +35,7 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <header className="sticky top-2 z-50 w-full border-b border-border/40 bg-black/50 backdrop-blur-md">
+    <header className="sticky top-2 z-50 w-full border-b border-white/10 bg-black/50 backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center">
@@ -77,7 +77,7 @@ export default function Navbar() {
 
         {/* Mobile navigation */}
         {isOpen && (
-          <div className="absolute top-16 left-0 right-0 z-50 flex flex-col gap-2 border-b border-border/40 bg-black/90 p-4 backdrop-blur-md md:hidden">
+          <div className="absolute top-16 left-0 right-0 z-50 flex flex-col gap-2 border-b border-white/10 bg-black/90 p-4 backdrop-blur-md md:hidden">
             {routes.map((route) => (
               <Link
                 key={route.path}
