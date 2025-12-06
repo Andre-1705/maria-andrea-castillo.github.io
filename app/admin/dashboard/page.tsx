@@ -35,17 +35,13 @@ export default function AdminDashboardPage() {
     const loadData = async () => {
       try {
         setLoading(true)
-        const [jobsRes, statsRes] = await Promise.all([
-          fetch('/api/jobs'),
-          fetch('/api/clients/stats'),
-        ])
+        const jobsRes = await fetch('/api/jobs')
 
-        if (!jobsRes.ok || !statsRes.ok) {
-          throw new Error('Error cargando datos')
+        if (!jobsRes.ok) {
+          throw new Error('Error cargando trabajos')
         }
 
         const jobsByCategory = await jobsRes.json()
-        const stats = await statsRes.json()
         
         const customOrder = [
           "Desarrollo Web",
@@ -55,10 +51,16 @@ export default function AdminDashboardPage() {
         ]
         const categories = customOrder.filter(cat => Object.keys(jobsByCategory || {}).includes(cat))
 
+        // Calcular stats básicos desde los jobs
+        const stats = {
+          totalProjects: Object.values(jobsByCategory || {}).reduce((sum: number, arr: any) => sum + (Array.isArray(arr) ? arr.length : 0), 0),
+          totalCategories: categories.length,
+        }
+
         setData({
           jobs: jobsByCategory || {},
           categories,
-          stats: stats || {},
+          stats,
         })
       } catch (err: any) {
         console.error('Error loading dashboard:', err)
