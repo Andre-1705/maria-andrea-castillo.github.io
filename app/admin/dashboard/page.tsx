@@ -20,23 +20,23 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     if (!mounted) return
 
-    console.log('🔐 AdminDashboardPage mounted, checking auth...')
+    console.log('🔐 Dashboard: Checking authentication...')
     
     // Verificar autenticación
     const token = localStorage?.getItem('admin_token')
     const email = localStorage?.getItem('admin_email')
     
-    console.log('🔑 Token:', token ? 'exists' : 'missing')
-    console.log('📧 Email:', email ? 'exists' : 'missing')
+    console.log('🔑 Token exists:', !!token)
+    console.log('📧 Email exists:', !!email)
     
     if (!token || !email) {
-      console.log('❌ No auth found, redirecting to /admin')
-      router.push('/admin')
+      console.log('❌ Not authenticated, redirecting to /admin')
+      window.location.href = '/admin'
       return
     }
     
+    console.log('✅ User is authenticated')
     setIsAuthenticated(true)
-    console.log('✅ Authenticated')
 
     const loadData = async () => {
       try {

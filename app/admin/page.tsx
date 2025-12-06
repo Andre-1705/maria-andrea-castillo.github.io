@@ -182,7 +182,17 @@ export default function AdminLoginPage() {
           color: '#999'
         }}>
           <p style={{ margin: '0 0 6px 0' }}>📧 Email: mariaandreacastilloarregui@gmail.com</p>
-          <p style={{ margin: '0' }}>🔐 Contraseña: admin123</p>
+          <p style={{ margin: '0 0 12px 0' }}>🔐 Contraseña: admin123</p>
+          <a 
+            href="/admin/dashboard" 
+            style={{ 
+              color: '#3b82f6', 
+              textDecoration: 'underline',
+              fontSize: '11px'
+            }}
+          >
+            → Ir al dashboard directamente
+          </a>
         </div>
       </div>
     </div>
