@@ -1,52 +1,29 @@
-"use client"
+'use client'
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
-import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { useToast } from "@/components/ui/use-toast"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Lock } from "lucide-react"
-
-const formSchema = z.object({
-  username: z.string().min(2, {
-    message: "El nombre de usuario debe tener al menos 2 caracteres.",
-  }),
-  password: z.string().min(6, {
-    message: "La contraseña debe tener al menos 6 caracteres.",
-  }),
-})
+import { useState, FormEvent, ChangeEvent } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function AdminLoginPage() {
-  const { toast } = useToast()
   const router = useRouter()
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      username: "",
-      password: "",
-    },
-  })
-
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsSubmitting(true)
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setError('')
+    setSuccess('')
+    setLoading(true)
 
     try {
-      console.log('📝 Intentando login con:', values.username)
+      console.log('📝 Intentando login con:', email)
       
       const response = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: values.username,
-          password: values.password,
-        }),
+        body: JSON.stringify({ email, password }),
       })
 
       console.log('📊 Response status:', response.status)
@@ -55,102 +32,159 @@ export default function AdminLoginPage() {
 
       if (response.ok && data.success) {
         console.log('✅ Login exitoso!')
+        setSuccess('¡Login exitoso! Redirigiendo...')
         
-        toast({
-          title: "Inicio de sesión exitoso",
-          description: "Bienvenido al panel de administración.",
-        })
+        // Guardar en sessionStorage
+        sessionStorage.setItem('admin_token', data.token)
+        sessionStorage.setItem('admin_email', email)
+        console.log('💾 Credenciales guardadas')
 
-        // Guardar token y email en sessionStorage
-        if (data.token) {
-          sessionStorage.setItem("admin_token", data.token)
-          console.log('💾 Token guardado')
-        }
-        sessionStorage.setItem("admin_email", values.username)
-        console.log('💾 Email guardado')
-
-        // Redirigir al panel
-        console.log('🔄 Redirigiendo a /admin/dashboard')
+        // Esperar un poco y redirigir
         setTimeout(() => {
-          router.push("/admin/dashboard")
-        }, 500)
+          console.log('🔄 Redirigiendo a /admin/dashboard')
+          router.push('/admin/dashboard')
+        }, 1000)
       } else {
         console.log('❌ Login fallido:', data.error)
-        toast({
-          title: "Error de autenticación",
-          description: data.error || "Credenciales incorrectas. Inténtalo de nuevo.",
-          variant: "destructive",
-        })
+        setError(data.error || 'Credenciales incorrectas')
       }
-    } catch (error: any) {
-      console.error('❌ Error en login:', error)
-      toast({
-        title: "Error",
-        description: "Error al conectar con el servidor: " + (error?.message || error),
-        variant: "destructive",
-      })
+    } catch (err: any) {
+      console.error('❌ Error:', err)
+      setError('Error al conectar: ' + (err?.message || err))
     } finally {
-      setIsSubmitting(false)
+      setLoading(false)
     }
   }
 
   return (
-    <div className="container py-12 max-w-md">
-      <Card className="bg-black/50 border-white/10">
-        <CardHeader className="space-y-1">
-          <div className="flex justify-center mb-4">
-            <div className="p-3 rounded-full bg-primary/10">
-              <Lock className="h-6 w-6 text-primary" />
-            </div>
-          </div>
-          <CardTitle className="text-2xl text-center">Acceso Administrativo</CardTitle>
-          <CardDescription className="text-center">
-            Ingresa tus credenciales para acceder al panel de administración
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="mariaandreacastilloarregui@gmail.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contraseña</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="••••••" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? "Iniciando sesión..." : "Iniciar sesión"}
-              </Button>
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'linear-gradient(to bottom, #000, #1a1a2e)'
+    }}>
+      <div style={{
+        width: '100%',
+        maxWidth: '400px',
+        padding: '20px',
+        background: '#111',
+        border: '1px solid #333',
+        borderRadius: '8px'
+      }}>
+        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+          <h1 style={{ color: '#fff', marginBottom: '10px', fontSize: '24px' }}>
+            Panel Administrativo
+          </h1>
+          <p style={{ color: '#999', fontSize: '14px' }}>
+            Ingresa tus credenciales
+          </p>
+        </div>
 
-              <div className="text-center text-sm text-muted-foreground mt-4">
-                <p>Usa tus credenciales de administrador:</p>
-                <p>
-                  Email: <strong>mariaandreacastilloarregui@gmail.com</strong>
-                </p>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+        {success && (
+          <div style={{
+            background: '#10b981',
+            color: '#fff',
+            padding: '12px',
+            borderRadius: '4px',
+            marginBottom: '16px',
+            fontSize: '14px'
+          }}>
+            ✅ {success}
+          </div>
+        )}
+
+        {error && (
+          <div style={{
+            background: '#ef4444',
+            color: '#fff',
+            padding: '12px',
+            borderRadius: '4px',
+            marginBottom: '16px',
+            fontSize: '14px'
+          }}>
+            ❌ {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <label style={{ color: '#fff', display: 'block', marginBottom: '6px', fontSize: '14px' }}>
+              Email
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+              placeholder="mariaandreacastilloarregui@gmail.com"
+              required
+              style={{
+                width: '100%',
+                padding: '10px',
+                background: '#1a1a1a',
+                border: '1px solid #333',
+                borderRadius: '4px',
+                color: '#fff',
+                fontSize: '14px',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ color: '#fff', display: 'block', marginBottom: '6px', fontSize: '14px' }}>
+              Contraseña
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+              placeholder="••••••"
+              required
+              style={{
+                width: '100%',
+                padding: '10px',
+                background: '#1a1a1a',
+                border: '1px solid #333',
+                borderRadius: '4px',
+                color: '#fff',
+                fontSize: '14px',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              padding: '12px',
+              background: loading ? '#666' : '#3b82f6',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              transition: 'background 0.2s'
+            }}
+          >
+            {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
+          </button>
+        </form>
+
+        <div style={{
+          marginTop: '20px',
+          padding: '12px',
+          background: '#1a1a2e',
+          borderRadius: '4px',
+          fontSize: '12px',
+          color: '#999'
+        }}>
+          <p style={{ margin: '0 0 6px 0' }}>📧 Email: mariaandreacastilloarregui@gmail.com</p>
+          <p style={{ margin: '0' }}>🔐 Contraseña: admin123</p>
+        </div>
+      </div>
     </div>
   )
 }
