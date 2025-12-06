@@ -26,8 +26,11 @@ export function AdminDashboardClient({ jobs, categories, stats }: AdminDashboard
   const handleLogout = () => {
     try {
       if (typeof window !== 'undefined') {
+        // Limpiar tanto sessionStorage como localStorage
         sessionStorage?.removeItem("admin_token")
         sessionStorage?.removeItem("admin_email")
+        localStorage?.removeItem("admin_token")
+        localStorage?.removeItem("admin_email")
         localStorage?.removeItem("isAuthenticated")
       }
     } catch (e) {

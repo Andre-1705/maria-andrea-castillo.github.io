@@ -53,8 +53,10 @@ export default function AdminDashboardPage() {
 
         // Calcular stats básicos desde los jobs
         const stats = {
-          totalProjects: Object.values(jobsByCategory || {}).reduce((sum: number, arr: any) => sum + (Array.isArray(arr) ? arr.length : 0), 0),
-          totalCategories: categories.length,
+          totalJobs: Object.values(jobsByCategory || {}).reduce((sum: number, arr: any) => sum + (Array.isArray(arr) ? arr.length : 0), 0),
+          totalClients: 0,
+          pendingClients: 0,
+          visitorsCount: 0,
         }
 
         setData({
