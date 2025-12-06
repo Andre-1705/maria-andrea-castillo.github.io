@@ -34,10 +34,10 @@ export default function AdminLoginPage() {
         console.log('✅ Login exitoso!')
         setSuccess('¡Login exitoso! Redirigiendo...')
         
-        // Guardar en sessionStorage
-        sessionStorage.setItem('admin_token', data.token)
-        sessionStorage.setItem('admin_email', email)
-        console.log('💾 Credenciales guardadas')
+        // Guardar en localStorage (persiste incluso después de cerrar navegador)
+        localStorage.setItem('admin_token', data.token)
+        localStorage.setItem('admin_email', email)
+        console.log('💾 Credenciales guardadas en localStorage')
 
         // Esperar un poco y redirigir
         setTimeout(() => {

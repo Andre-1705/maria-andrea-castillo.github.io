@@ -15,8 +15,8 @@ export default function AdminDashboardPage() {
     // Verificar autenticación primero
     const checkAuth = () => {
       try {
-        const token = sessionStorage?.getItem('admin_token')
-        const email = sessionStorage?.getItem('admin_email')
+        const token = localStorage?.getItem('admin_token')
+        const email = localStorage?.getItem('admin_email')
         if (token && email) {
           setIsAuthenticated(true)
         } else {
@@ -24,7 +24,7 @@ export default function AdminDashboardPage() {
           return false
         }
       } catch {
-        // Si hay error al acceder a sessionStorage, permitir que continúe
+        // Si hay error al acceder a localStorage, permitir que continúe
         setIsAuthenticated(true)
       }
       return true
