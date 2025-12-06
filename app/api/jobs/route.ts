@@ -6,33 +6,72 @@ import path from "path"
 
 export async function GET(req: NextRequest) {
   try {
-    // Intentar obtener trabajos de la base de datos
-    const jobs = await JobsService.getAllJobs()
-    
-    // Combinar con trabajos subidos recientemente
+    // Primero obtener trabajos de Supabase (viene como array)
+    let dbJobsArray: any[] = []
     try {
-      const jobsDbPath = path.join(process.cwd(), 'lib', 'jobs-db.json')
+      dbJobsArray = await JobsService.getAllJobs()
+    } catch (error) {
+      console.error("Error fetching jobs from DB:", error)
+    }
+    
+    // Combinar trabajos: primero los subidos localmente, luego los de BD
+    const jobsDbPath = path.join(process.cwd(), 'lib', 'jobs-db.json')
+    const combined: Record<string, any[]> = {}
+    
+    // 1. Cargar trabajos subidos localmente desde jobs-db.json
+    try {
       const data = await fs.readFile(jobsDbPath, 'utf-8')
       const uploadedJobs = JSON.parse(data)
       
-      // Combinar trabajos
-      const combined: Record<string, any[]> = { ...jobs }
       for (const category in uploadedJobs) {
-        if (combined[category]) {
-          combined[category] = [...uploadedJobs[category], ...combined[category]]
-        } else {
-          combined[category] = uploadedJobs[category]
+        if (!combined[category]) {
+          combined[category] = []
         }
+        combined[category] = [...uploadedJobs[category]]
       }
-      return NextResponse.json(combined)
     } catch (e) {
-      // Si no existe jobs-db, solo devolver los de la BD
-      return NextResponse.json(jobs)
+      console.log("No jobs-db.json found")
     }
+    
+    // 2. Agregar trabajos de la base de datos (agrupar por categoría)
+    if (Array.isArray(dbJobsArray) && dbJobsArray.length > 0) {
+      for (const job of dbJobsArray) {
+        const category = job.category || 'Otros'
+        if (!combined[category]) {
+          combined[category] = []
+        }
+        combined[category].push(job)
+      }
+    }
+    
+    // 3. Si no hay trabajos, usar fallback de jobsData
+    if (Object.keys(combined).length === 0) {
+      console.log("Usando datos del archivo JSON como fallback")
+      // jobsData viene como array, necesitamos agruparlo
+      const fallback: Record<string, any[]> = {}
+      for (const job of jobsData) {
+        const category = job.category || 'Otros'
+        if (!fallback[category]) {
+          fallback[category] = []
+        }
+        fallback[category].push(job)
+      }
+      return NextResponse.json(fallback)
+    }
+    
+    return NextResponse.json(combined)
   } catch (error) {
-    // Si falla, devolver los datos del archivo JSON
-    console.log("Usando datos del archivo JSON como fallback")
-    return NextResponse.json(jobsData)
+    console.error("Error in jobs GET:", error)
+    // Si todo falla, devolver jobsData agrupado
+    const fallback: Record<string, any[]> = {}
+    for (const job of jobsData) {
+      const category = job.category || 'Otros'
+      if (!fallback[category]) {
+        fallback[category] = []
+      }
+      fallback[category].push(job)
+    }
+    return NextResponse.json(fallback)
   }
 }
 
