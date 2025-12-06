@@ -174,20 +174,31 @@ export function JobUploadForm({
             )}
 
             {/* Upload Area */}
-            <label htmlFor="file-upload" className="block">
+            <div className="space-y-2">
+              <label htmlFor="file-upload" className="text-sm font-medium">
+                Archivo (imagen o video)
+              </label>
+              <input
+                id="file-upload"
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,video/*"
+                onChange={handleFileSelect}
+                className="hidden"
+                aria-label="Subir archivo (imagen o video)"
+              />
               <div
                 onClick={() => fileInputRef.current?.click()}
                 className="border-2 border-dashed border-primary/40 rounded-lg p-8 text-center cursor-pointer hover:border-primary/60 transition"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    fileInputRef.current?.click()
+                  }
+                }}
               >
-                <input
-                  id="file-upload"
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*,video/*"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  aria-label="Subir archivo (imagen o video)"
-                />
                 {!preview ? (
                   <div>
                     <Upload className="h-10 w-10 mx-auto mb-2 text-primary/60" />
@@ -204,7 +215,7 @@ export function JobUploadForm({
                   </div>
                 )}
               </div>
-            </label>
+            </div>
 
             {/* Form Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
