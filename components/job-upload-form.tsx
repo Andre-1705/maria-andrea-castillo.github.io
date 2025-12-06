@@ -26,18 +26,20 @@ const formSchema = z.object({
 })
 
 interface JobUploadFormProps {
-  categories: string[]
-  selectedCategory: string
-  onCategoryChange: (category: string) => void
-  onCancel: () => void
+  categories?: string[]
+  selectedCategory?: string
+  onCategoryChange?: (category: string) => void
+  onCancel?: () => void
+  onSubmit?: (data: any) => void
 }
 
 export function JobUploadForm({
-  categories,
-  selectedCategory,
-  onCategoryChange,
-  onCancel,
-}: JobUploadFormProps) {
+  categories = [],
+  selectedCategory = "",
+  onCategoryChange = () => {},
+  onCancel = () => {},
+  onSubmit = () => {},
+}: JobUploadFormProps = {}) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [preview, setPreview] = useState<string | null>(null)
   const [fileType, setFileType] = useState<'image' | 'video' | null>(null)
@@ -172,33 +174,37 @@ export function JobUploadForm({
             )}
 
             {/* Upload Area */}
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-primary/40 rounded-lg p-8 text-center cursor-pointer hover:border-primary/60 transition"
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*,video/*"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-              {!preview ? (
-                <div>
-                  <Upload className="h-10 w-10 mx-auto mb-2 text-primary/60" />
-                  <p className="text-sm font-medium">Haz clic para subir imagen o video</p>
-                  <p className="text-xs text-muted-foreground">PNG, JPG, WEBP, GIF (fotos) o MP4, WEBM, MOV (videos)</p>
-                </div>
-              ) : (
-                <div className="text-sm">
-                  {fileType === 'image' ? (
-                    <><ImageIcon className="h-5 w-5 mx-auto mb-1" /> Imagen seleccionada</>
-                  ) : (
-                    <><Video className="h-5 w-5 mx-auto mb-1" /> Video seleccionado</>
-                  )}
-                </div>
-              )}
-            </div>
+            <label htmlFor="file-upload" className="block">
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-primary/40 rounded-lg p-8 text-center cursor-pointer hover:border-primary/60 transition"
+              >
+                <input
+                  id="file-upload"
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,video/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  aria-label="Subir archivo (imagen o video)"
+                />
+                {!preview ? (
+                  <div>
+                    <Upload className="h-10 w-10 mx-auto mb-2 text-primary/60" />
+                    <p className="text-sm font-medium">Haz clic para subir imagen o video</p>
+                    <p className="text-xs text-muted-foreground">PNG, JPG, WEBP, GIF (fotos) o MP4, WEBM, MOV (videos)</p>
+                  </div>
+                ) : (
+                  <div className="text-sm">
+                    {fileType === 'image' ? (
+                      <><ImageIcon className="h-5 w-5 mx-auto mb-1" /> Imagen seleccionada</>
+                    ) : (
+                      <><Video className="h-5 w-5 mx-auto mb-1" /> Video seleccionado</>
+                    )}
+                  </div>
+                )}
+              </div>
+            </label>
 
             {/* Form Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
