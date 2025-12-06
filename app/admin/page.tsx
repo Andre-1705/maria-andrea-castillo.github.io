@@ -159,7 +159,7 @@ export default function AdminLoginPage() {
             disabled={loading}
             style={{
               padding: '12px',
-              background: loading ? '#666' : '#3b82f6',
+              background: loading ? '#555' : '#0066cc',
               color: '#fff',
               border: 'none',
               borderRadius: '4px',
