@@ -49,7 +49,14 @@ export default function Navbar() {
         </div>
 
         {/* Mobile menu button */}
-        <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsOpen(!isOpen)}>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="md:hidden" 
+          onClick={() => setIsOpen(!isOpen)}
+          aria-label={isOpen ? "Cerrar menú" : "Abrir menú"}
+          title={isOpen ? "Cerrar menú" : "Abrir menú"}
+        >
           {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </Button>
 
@@ -69,7 +76,7 @@ export default function Navbar() {
             </Link>
           ))}
           <Link href="/admin">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" aria-label="Admin Login" title="Admin Login">
               <Lock className="h-4 w-4" />
             </Button>
           </Link>
@@ -93,7 +100,7 @@ export default function Navbar() {
               </Link>
             ))}
             <Link href="/admin" onClick={() => setIsOpen(false)}>
-              <Button variant="outline" size="sm" className="w-full">
+              <Button variant="outline" size="sm" className="w-full" aria-label="Admin Login" title="Admin Login">
                 <Lock className="h-4 w-4" />
               </Button>
             </Link>
