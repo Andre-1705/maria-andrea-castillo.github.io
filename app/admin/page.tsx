@@ -39,10 +39,10 @@ export default function AdminLoginPage() {
         localStorage.setItem('admin_email', email)
         console.log('💾 Credenciales guardadas en localStorage')
 
-        // Esperar un poco y redirigir
+        // Usar window.location para forzar navegación completa
         setTimeout(() => {
           console.log('🔄 Redirigiendo a /admin/dashboard')
-          router.push('/admin/dashboard')
+          window.location.href = '/admin/dashboard'
         }, 1000)
       } else {
         console.log('❌ Login fallido:', data.error)
