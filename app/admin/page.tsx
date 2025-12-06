@@ -38,6 +38,8 @@ export default function AdminLoginPage() {
     setIsSubmitting(true)
 
     try {
+      console.log('📝 Intentando login con:', values.username)
+      
       const response = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -47,33 +49,44 @@ export default function AdminLoginPage() {
         }),
       })
 
+      console.log('📊 Response status:', response.status)
       const data = await response.json()
+      console.log('📦 Response data:', data)
 
       if (response.ok && data.success) {
+        console.log('✅ Login exitoso!')
+        
         toast({
           title: "Inicio de sesión exitoso",
           description: "Bienvenido al panel de administración.",
         })
 
-        // Guardar token y email en sessionStorage (más seguro que localStorage)
+        // Guardar token y email en sessionStorage
         if (data.token) {
           sessionStorage.setItem("admin_token", data.token)
+          console.log('💾 Token guardado')
         }
         sessionStorage.setItem("admin_email", values.username)
+        console.log('💾 Email guardado')
 
-        // Redirigir al panel de administración
-        router.push("/admin/dashboard")
+        // Redirigir al panel
+        console.log('🔄 Redirigiendo a /admin/dashboard')
+        setTimeout(() => {
+          router.push("/admin/dashboard")
+        }, 500)
       } else {
+        console.log('❌ Login fallido:', data.error)
         toast({
           title: "Error de autenticación",
           description: data.error || "Credenciales incorrectas. Inténtalo de nuevo.",
           variant: "destructive",
         })
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('❌ Error en login:', error)
       toast({
         title: "Error",
-        description: "Error al conectar con el servidor",
+        description: "Error al conectar con el servidor: " + (error?.message || error),
         variant: "destructive",
       })
     } finally {

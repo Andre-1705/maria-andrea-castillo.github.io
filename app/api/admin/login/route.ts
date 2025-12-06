@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// Credenciales de admin (en producción, usar Supabase Auth)
-const ADMIN_EMAILS = [
-  'mariaandreacastilloarregui@gmail.com'
-]
-
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'
+// Credenciales de admin hardcodeadas como fallback
+const ADMIN_CREDENTIALS = {
+  email: 'mariaandreacastilloarregui@gmail.com',
+  password: 'admin123'
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json()
+    const body = await request.json()
+    const { email, password } = body
+
+    console.log('📧 Intento de login con email:', email)
 
     // Validación básica
     if (!email || !password) {
@@ -19,9 +21,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verificar credenciales (en producción, usar Supabase Auth)
-    const isValidEmail = ADMIN_EMAILS.includes(email.toLowerCase())
-    const isValidPassword = password === ADMIN_PASSWORD
+    // Verificar credenciales
+    const isValidEmail = email.toLowerCase() === ADMIN_CREDENTIALS.email.toLowerCase()
+    const isValidPassword = password === ADMIN_CREDENTIALS.password
+
+    console.log('🔐 Email válido:', isValidEmail, 'Password válida:', isValidPassword)
 
     if (!isValidEmail || !isValidPassword) {
       return NextResponse.json(
@@ -30,8 +34,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Crear token simple (en producción, usar JWT)
+    // Crear token simple
     const token = Buffer.from(`${email}:${Date.now()}`).toString('base64')
+
+    console.log('✅ Login exitoso para:', email)
 
     return NextResponse.json(
       { 
@@ -42,10 +48,10 @@ export async function POST(request: NextRequest) {
       },
       { status: 200 }
     )
-  } catch (error) {
-    console.error('Error en login:', error)
+  } catch (error: any) {
+    console.error('❌ Error en login:', error?.message || error)
     return NextResponse.json(
-      { error: 'Error del servidor', success: false },
+      { error: 'Error del servidor: ' + (error?.message || 'Unknown'), success: false },
       { status: 500 }
     )
   }
