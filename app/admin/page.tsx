@@ -1,15 +1,64 @@
 'use client'
 
-import { useState, FormEvent, ChangeEvent } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, FormEvent, ChangeEvent, useEffect } from 'react'
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { LogOut, Briefcase, Users } from "lucide-react"
 
-export default function AdminLoginPage() {
-  const router = useRouter()
+export default function AdminPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [dashboardData, setDashboardData] = useState({ jobs: {}, categories: [], stats: { totalJobs: 0, totalClients: 0, pendingClients: 0, visitorsCount: 0 } })
+  const [dashboardLoading, setDashboardLoading] = useState(false)
+
+  // Verificar si ya está logueado al montar
+  useEffect(() => {
+    const token = localStorage?.getItem('admin_token')
+    const userEmail = localStorage?.getItem('admin_email')
+    if (token && userEmail) {
+      setIsLoggedIn(true)
+      setEmail(userEmail)
+      loadDashboardData()
+    }
+  }, [])
+
+  const loadDashboardData = async () => {
+    try {
+      setDashboardLoading(true)
+      const jobsRes = await fetch('/api/jobs')
+      if (!jobsRes.ok) throw new Error('Error cargando trabajos')
+      
+      const jobsByCategory = await jobsRes.json()
+      const customOrder = [
+        "Desarrollo Web",
+        "Comunicación Digital",
+        "Marketing Digital",
+        "Producción Audiovisual",
+      ]
+      const categories = customOrder.filter(cat => Object.keys(jobsByCategory || {}).includes(cat))
+
+      const stats = {
+        totalJobs: Object.values(jobsByCategory || {}).reduce((sum: number, arr: any) => sum + (Array.isArray(arr) ? arr.length : 0), 0),
+        totalClients: 0,
+        pendingClients: 0,
+        visitorsCount: 0,
+      }
+
+      setDashboardData({
+        jobs: jobsByCategory || {},
+        categories,
+        stats,
+      })
+    } catch (err) {
+      console.error('Error loading dashboard:', err)
+    } finally {
+      setDashboardLoading(false)
+    }
+  }
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -26,34 +75,101 @@ export default function AdminLoginPage() {
         body: JSON.stringify({ email, password }),
       })
 
-      console.log('📊 Response status:', response.status)
       const data = await response.json()
-      console.log('📦 Response data:', data)
 
       if (response.ok && data.success) {
         console.log('✅ Login exitoso!')
-        setSuccess('¡Login exitoso! Redirigiendo...')
-        
-        // Guardar en localStorage (persiste incluso después de cerrar navegador)
         localStorage.setItem('admin_token', data.token)
         localStorage.setItem('admin_email', email)
-        console.log('💾 Credenciales guardadas en localStorage')
-
-        // Usar window.location para forzar navegación completa
-        setTimeout(() => {
-          console.log('🔄 Redirigiendo a /admin/dashboard')
-          window.location.href = '/admin/dashboard'
-        }, 1000)
+        
+        setIsLoggedIn(true)
+        setSuccess('✅ Login exitoso!')
+        setPassword('')
+        await loadDashboardData()
       } else {
-        console.log('❌ Login fallido:', data.error)
         setError(data.error || 'Credenciales incorrectas')
       }
     } catch (err: any) {
-      console.error('❌ Error:', err)
-      setError('Error al conectar: ' + (err?.message || err))
+      setError('Error al conectar')
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleLogout = () => {
+    localStorage?.removeItem('admin_token')
+    localStorage?.removeItem('admin_email')
+    setIsLoggedIn(false)
+    setEmail('')
+    setPassword('')
+  }
+
+  if (isLoggedIn) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(to bottom, #000, #1a1a2e)',
+        padding: '40px 20px'
+      }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+            <h1 style={{ color: '#fff', fontSize: '32px', fontWeight: 'bold', margin: 0 }}>
+              Panel de Administración
+            </h1>
+            <Button variant="outline" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Cerrar sesión
+            </Button>
+          </div>
+
+          {/* Estadísticas */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px', marginBottom: '30px' }}>
+            <Card className="bg-slate-900 border-slate-800">
+              <CardContent className="p-6">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <Briefcase style={{ color: '#3b82f6', width: '24px', height: '24px' }} />
+                  <div>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#fff' }}>
+                      {dashboardData.stats.totalJobs}
+                    </div>
+                    <p style={{ fontSize: '12px', color: '#9ca3af', margin: 0 }}>Trabajos</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-slate-900 border-slate-800">
+              <CardContent className="p-6">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <Users style={{ color: '#10b981', width: '24px', height: '24px' }} />
+                  <div>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#fff' }}>
+                      {dashboardData.stats.totalClients}
+                    </div>
+                    <p style={{ fontSize: '12px', color: '#9ca3af', margin: 0 }}>Clientes</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Categorías */}
+          <div style={{ background: '#111', border: '1px solid #333', borderRadius: '8px', padding: '20px' }}>
+            <h2 style={{ color: '#fff', fontSize: '18px', marginTop: 0 }}>Categorías disponibles</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
+              {dashboardData.categories.map(cat => (
+                <div key={cat} style={{ background: '#1a1a1a', border: '1px solid #333', borderRadius: '4px', padding: '12px' }}>
+                  <p style={{ color: '#fff', fontSize: '14px', margin: 0 }}>{cat}</p>
+                  <p style={{ color: '#666', fontSize: '12px', margin: 0 }}>
+                    {dashboardData.jobs[cat]?.length || 0} trabajos
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
