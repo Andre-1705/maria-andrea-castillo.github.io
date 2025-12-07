@@ -25,21 +25,28 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!mounted) return
-    
-    const token = localStorage?.getItem('admin_token')
-    const userEmail = localStorage?.getItem('admin_email')
-    
-    console.log('🔐 Checking auth - Token:', !!token, 'Email:', !!userEmail)
-    
-    if (token && userEmail) {
-      console.log('✅ User is authenticated')
-      setIsLoggedIn(true)
-      setEmail(userEmail)
-      loadDashboardData()
-    } else {
-      console.log('❌ No authentication found')
+
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/admin/validate', { method: 'GET', credentials: 'include' })
+        if (res.ok) {
+          const data = await res.json()
+          setIsLoggedIn(true)
+          setEmail(data.email || localStorage.getItem('admin_email') || '')
+          loadDashboardData()
+          return
+        }
+      } catch (err) {
+        console.error('Error verificando auth', err)
+      }
+
+      // Si falla, limpiar estado local
+      localStorage?.removeItem('admin_token')
+      localStorage?.removeItem('admin_email')
       setIsLoggedIn(false)
     }
+
+    checkAuth()
   }, [mounted])
 
   const loadDashboardData = async () => {
@@ -95,8 +102,7 @@ export default function AdminPage() {
 
       if (response.ok && data.success) {
         console.log('✅ Login exitoso!')
-        // Guardar en localStorage para persistencia visual (el token real va en cookie httpOnly)
-        localStorage.setItem('admin_token', data.token)
+        // Guardar solo el email para mostrar; el token vive en cookie httpOnly
         localStorage.setItem('admin_email', email)
         
         setIsLoggedIn(true)
@@ -120,7 +126,6 @@ export default function AdminPage() {
       console.error('Error al cerrar sesión', err)
     }
 
-    localStorage?.removeItem('admin_token')
     localStorage?.removeItem('admin_email')
     setIsLoggedIn(false)
     setEmail('')
