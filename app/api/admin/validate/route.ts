@@ -6,6 +6,10 @@ const TOKEN_TTL_MS = 1000 * 60 * 60 * 24 * 7 // 7 días
 const encoder = new TextEncoder()
 
 function base64ToUint8(base64: string) {
+  // Node runtime no tiene atob; usar Buffer cuando esté disponible
+  if (typeof Buffer !== 'undefined') {
+    return new Uint8Array(Buffer.from(base64, 'base64'))
+  }
   const binary = atob(base64)
   const bytes = new Uint8Array(binary.length)
   for (let i = 0; i < binary.length; i++) {
