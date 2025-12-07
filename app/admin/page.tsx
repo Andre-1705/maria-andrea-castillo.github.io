@@ -95,12 +95,9 @@ export default function AdminPage() {
 
       if (response.ok && data.success) {
         console.log('✅ Login exitoso!')
-        // Guardar en localStorage para persistencia
+        // Guardar en localStorage para persistencia visual (el token real va en cookie httpOnly)
         localStorage.setItem('admin_token', data.token)
         localStorage.setItem('admin_email', email)
-        
-        // Guardar en cookies para middleware
-        document.cookie = `admin_token=${data.token}; path=/; max-age=604800; secure; samesite=strict`
         
         setIsLoggedIn(true)
         setSuccess('✅ Login exitoso!')
@@ -116,11 +113,15 @@ export default function AdminPage() {
     }
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/logout', { method: 'POST' })
+    } catch (err) {
+      console.error('Error al cerrar sesión', err)
+    }
+
     localStorage?.removeItem('admin_token')
     localStorage?.removeItem('admin_email')
-    // Limpiar cookies
-    document.cookie = 'admin_token=; path=/; max-age=0'
     setIsLoggedIn(false)
     setEmail('')
     setPassword('')
