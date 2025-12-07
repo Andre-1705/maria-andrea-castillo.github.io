@@ -3,7 +3,8 @@
 import { useState, FormEvent, ChangeEvent, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { LogOut, Briefcase, Users } from "lucide-react"
+import { LogOut, Briefcase, Users, Upload as UploadIcon } from "lucide-react"
+import { JobUploadForm } from "@/components/job-upload-form"
 
 export default function AdminPage() {
   const [email, setEmail] = useState('')
@@ -12,19 +13,34 @@ export default function AdminPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const [showUploadForm, setShowUploadForm] = useState(false)
   const [dashboardData, setDashboardData] = useState({ jobs: {}, categories: [], stats: { totalJobs: 0, totalClients: 0, pendingClients: 0, visitorsCount: 0 } })
   const [dashboardLoading, setDashboardLoading] = useState(false)
 
-  // Verificar si ya está logueado al montar
+  // Solo verificar auth en el cliente
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+    
     const token = localStorage?.getItem('admin_token')
     const userEmail = localStorage?.getItem('admin_email')
+    
+    console.log('🔐 Checking auth - Token:', !!token, 'Email:', !!userEmail)
+    
     if (token && userEmail) {
+      console.log('✅ User is authenticated')
       setIsLoggedIn(true)
       setEmail(userEmail)
       loadDashboardData()
+    } else {
+      console.log('❌ No authentication found')
+      setIsLoggedIn(false)
     }
-  }, [])
+  }, [mounted])
 
   const loadDashboardData = async () => {
     try {
@@ -102,6 +118,20 @@ export default function AdminPage() {
     setIsLoggedIn(false)
     setEmail('')
     setPassword('')
+    setShowUploadForm(false)
+  }
+
+  const handleJobUploaded = () => {
+    setShowUploadForm(false)
+    loadDashboardData() // Recargar datos después de subir
+  }
+
+  if (!mounted) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000' }}>
+        <div style={{ color: '#fff' }}>Cargando...</div>
+      </div>
+    )
   }
 
   if (isLoggedIn) {
@@ -152,6 +182,28 @@ export default function AdminPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Botón para subir trabajos */}
+          <div style={{ marginBottom: '30px' }}>
+            <Button 
+              onClick={() => setShowUploadForm(true)}
+              style={{ background: '#3b82f6', color: '#fff' }}
+            >
+              <UploadIcon className="h-4 w-4 mr-2" />
+              Subir Nuevo Trabajo
+            </Button>
+          </div>
+
+          {/* Formulario de subida */}
+          {showUploadForm && (
+            <div style={{ marginBottom: '30px' }}>
+              <JobUploadForm
+                categories={dashboardData.categories}
+                onCancel={() => setShowUploadForm(false)}
+                onSubmit={handleJobUploaded}
+              />
+            </div>
+          )}
 
           {/* Categorías */}
           <div style={{ background: '#111', border: '1px solid #333', borderRadius: '8px', padding: '20px' }}>
