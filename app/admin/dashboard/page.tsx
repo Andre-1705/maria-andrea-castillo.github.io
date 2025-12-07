@@ -13,7 +13,7 @@ export default function AdminDashboardPage() {
   const router = useRouter()
 
   useEffect(() => {
-    // Solo ejecutar en el cliente
+    // Asegurar que solo se ejecuta en el cliente
     setMounted(true)
   }, [])
 
