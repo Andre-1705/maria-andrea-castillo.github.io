@@ -264,18 +264,6 @@ export default function AdminPage() {
               {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
             </button>
           </form>
-
-          <div style={{
-            marginTop: '20px',
-            padding: '12px',
-            background: '#1a1a2e',
-            borderRadius: '4px',
-            fontSize: '12px',
-            color: '#999'
-          }}>
-            <p style={{ margin: '0 0 6px 0' }}>📧 Email: mariaandreacastilloarregui@gmail.com</p>
-            <p style={{ margin: '0 0 6px 0' }}>🔐 Contraseña: admin123</p>
-          </div>
         </div>
       </div>
     )
