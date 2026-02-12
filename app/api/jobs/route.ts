@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { JobsService } from "@/lib/jobs-service"
 import jobsData from "@/app/jobs/jobs-data"
-import fs from "fs/promises"
-import path from "path"
+import jobsDbJson from "@/lib/jobs-db.json"
 
 export async function GET(req: NextRequest) {
   try {
@@ -15,13 +14,11 @@ export async function GET(req: NextRequest) {
     }
     
     // Combinar trabajos: primero los subidos localmente, luego los de BD
-    const jobsDbPath = path.join(process.cwd(), 'lib', 'jobs-db.json')
     const combined: Record<string, any[]> = {}
     
     // 1. Cargar trabajos subidos localmente desde jobs-db.json
     try {
-      const data = await fs.readFile(jobsDbPath, 'utf-8')
-      const uploadedJobs = JSON.parse(data)
+      const uploadedJobs = jobsDbJson as Record<string, any[]>
       
       for (const category in uploadedJobs) {
         if (!combined[category]) {
@@ -30,7 +27,7 @@ export async function GET(req: NextRequest) {
         combined[category] = [...uploadedJobs[category]]
       }
     } catch (e) {
-      console.log("No jobs-db.json found")
+      console.log("Error loading jobs-db.json:", e)
     }
     
     // 2. Agregar trabajos de la base de datos (agrupar por categoría)
