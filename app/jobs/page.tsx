@@ -7,38 +7,13 @@ import jobsData from "./jobs-data"
 export const dynamic = "force-dynamic";
 
 export default async function JobsPage() {
-  // Intentar traer de la API (Supabase + uploads). Si falla, usar JSON local
+  // Usar directamente jobsData agrupado por categoría
   let jobsByCategory: Record<string, any[]> = {}
   
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/jobs`, { 
-      cache: 'no-store',
-      next: { revalidate: 0 }
-    })
-    if (res.ok) {
-      const data = await res.json()
-      console.log('📦 Datos recibidos en /jobs:', data)
-      
-      // Si data es un objeto con categorías, usarlo directamente
-      if (typeof data === 'object' && !Array.isArray(data)) {
-        jobsByCategory = data
-      } else if (Array.isArray(data)) {
-        // Si es array, agrupar por categoría
-        for (const job of data) {
-          if (!job.category) continue
-          if (!jobsByCategory[job.category]) jobsByCategory[job.category] = []
-          jobsByCategory[job.category].push(job)
-        }
-      }
-    }
-  } catch (error) {
-    console.error('Error fetching jobs:', error)
-    // Usar fallback de jobsData
-    for (const job of jobsData) {
-      if (!job.category) continue
-      if (!jobsByCategory[job.category]) jobsByCategory[job.category] = []
-      jobsByCategory[job.category].push(job)
-    }
+  for (const job of jobsData) {
+    const category = job.category || 'Otros'
+    if (!jobsByCategory[category]) jobsByCategory[category] = []
+    jobsByCategory[category].push(job)
   }
 
   const categoriesData = Object.keys(jobsByCategory)
